@@ -19,7 +19,8 @@ Each phase ends with a working, installable app.
 ## Phase 2 — Customers & orders
 - Customers list / detail / edit (incl. "customer since").
 - Order edit (line items, order date, deposit %), order list with search + filter chips, order detail skeleton with fulfillment stepper and manual status buttons.
-- **Done when:** you can enter your real current orders.
+- **Spreadsheet import** (one-time, from the existing .xlsx exported to CSV or read directly): customers, orders, designs, costs, payments; prints a list of rows it could not read. See [07](07-spreadsheet-review.md).
+- **Done when:** all past orders from the spreadsheet are in the app and the outstanding balances match the corrected list in Step 7.
 
 ## Phase 3 — Money
 - Record payment sheet, add cost sheet, money card, payment & cost lists, auto-complete rule.

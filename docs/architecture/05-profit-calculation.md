@@ -7,11 +7,16 @@ used by every screen, the dashboard and CSV export — so the numbers are identi
 
 | Input | Source |
 |---|---|
-| `sellingTotal` | Σ `quantity × unitPriceAgorot` over line items |
-| `costTotal` | Σ `order_costs.amountAgorot` (Alibaba goods, supplier shipping, FedEx, bank/FX fees, other — ₪ actually charged) |
+| `sellingTotal` | Σ `quantitySold × unitPriceAgorot` − `discountAgorot` |
+| `usdTotal` | Σ `quantityOrdered × unitCostUsdCents` + USD cost lines (mold, supplier shipping) |
+| `effectiveRate` | `usdRate × (1 + cardFeePercent/100)` — e.g. 3.84 × 1.03 = 3.955 |
+| `costTotal` | `round(usdTotal × effectiveRate)` + ₪ cost lines (customs, referral commission, FedEx, bank fee, other) |
 | `paidTotal` | Σ `payments.amountAgorot` |
 | `depositPercent` | order field, default 50 |
-| `totalQuantity` | Σ `quantity` |
+| `totalQuantity` | Σ `quantitySold` |
+
+This is exactly the spreadsheet's formula `(units×unit$ + mold$ + shipping$) × rate×1.03 + commission + customs`,
+with two fixes: **customs is always included**, and the **rate is stored on the order itself** so no row can point at another row's rate.
 
 ## Per-order formulas
 

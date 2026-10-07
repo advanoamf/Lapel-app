@@ -10,3 +10,4 @@ and 50% balance, and show real net profit.
 4. [UI / screen architecture](04-ui-screens.md)
 5. [Profit calculation logic](05-profit-calculation.md)
 6. [Development roadmap](06-roadmap.md)
+7. [Review of the current spreadsheet](07-spreadsheet-review.md)

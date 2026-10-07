@@ -9,7 +9,7 @@
 ## Entity relationship
 
 ```
-Customer 1───* Order 1───* OrderItem
+Customer 1───* Order 1───* OrderItem *───0..1 Design
                   │ 1───* Payment
                   │ 1───* OrderCost
                   │ 1───* Shipment 1───* TrackingEvent
@@ -26,7 +26,8 @@ data class CustomerEntity(
     val name: String,
     val phone: String?,            // E.164, used for call / WhatsApp intents
     val email: String?,
-    val company: String?,
+    val organization: String?,     // branch / organization – "סניף" (e.g. a youth-movement branch)
+    val paymentTermsDays: Int = 0, // 0 = pay on delivery; 60 = "שוטף+60"
     val notes: String?,
     val customerSince: LocalDate,  // editable "date added", defaults to today
     val createdAt: Instant,
@@ -41,11 +42,17 @@ data class CustomerEntity(
 data class OrderEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val customerId: Long,
+    val orderNumber: String,               // keeps existing numbering: "091", "008B", "102-148"
     val title: String,                     // e.g. "Team logo pins – 200 pcs"
     val orderDate: LocalDate,              // editable, defaults to today
     val dueDate: LocalDate?,               // promised delivery date to client
     val fulfillmentStatus: FulfillmentStatus,
     val depositPercent: Int = 50,          // payment plan; 50/50 by default
+    val usdRate: Double?,                  // ₪ per $ on the day the Alibaba order was paid (frozen per order)
+    val cardFeePercent: Double = 3.0,      // bank/card FX fee on USD payments
+    val discountAgorot: Long = 0,          // agreed discount / adjustment to the client
+    val deliveryMethod: DeliveryMethod,    // FEDEX, SELF_PICKUP
+    val qualityOk: Boolean?,               // "תקינות?" – received OK
     val alibabaOrderNumber: String?,
     val alibabaOrderedOn: LocalDate?,
     val supplierName: String?,
@@ -62,12 +69,15 @@ enum class FulfillmentStatus { DRAFT, ORDERED_FROM_ALIBABA, SHIPPED, DELIVERED, 
 data class OrderItemEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val orderId: Long,
+    val designId: Long?,           // reorders reuse a Design (mold already paid)
     val designName: String,
     val pinType: PinType,          // SOFT_ENAMEL, HARD_ENAMEL, DIE_STRUCK, PRINTED, OTHER
     val sizeMm: Int?,
     val plating: String?,          // gold, silver, black nickel…
-    val quantity: Int,
-    val unitPriceAgorot: Long,     // selling price per pin
+    val quantityOrdered: Int,      // from supplier (incl. spares)
+    val quantitySold: Int,         // billed to the client
+    val unitPriceAgorot: Long,     // selling price per pin (₪)
+    val unitCostUsdCents: Long,    // Alibaba price per pin ($)
     val artworkUri: String?,       // copied into app-private storage
 )
 
@@ -75,9 +85,20 @@ data class OrderItemEntity(
 data class OrderCostEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val orderId: Long,
-    val type: CostType,            // ALIBABA_GOODS, SUPPLIER_SHIPPING, FEDEX, BANK_FX_FEE, OTHER
-    val amountAgorot: Long,
+    val type: CostType,            // MOLD, SUPPLIER_SHIPPING, CUSTOMS, REFERRAL_COMMISSION, FEDEX, BANK_FEE, OTHER
+    val currency: Currency,        // USD or ILS
+    val amountMinor: Long,         // cents if USD, agorot if ILS (converted with the order's usdRate + card fee)
     val note: String?,
+)
+
+@Entity(tableName = "designs")
+data class DesignEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,              // "סיכת קווה"
+    val artworkUri: String?,
+    val supplierName: String?,
+    val moldPaidOnOrderId: Long?,  // reorders of this design add no mold cost
+    val notes: String?,
 )
 
 @Entity(tableName = "payments", foreignKeys = [ForeignKey(OrderEntity::class, ["id"], ["orderId"], onDelete = CASCADE)], indices = [Index("orderId")])
@@ -157,8 +178,9 @@ A Room `@DatabaseView` / `@Relation` query produces one row per order with total
 data class OrderSummary(
     val orderId: Long, val customerName: String, val title: String,
     val orderDate: LocalDate, val fulfillmentStatus: FulfillmentStatus, val depositPercent: Int,
-    val sellingTotal: Long,   // SUM(quantity * unitPriceAgorot)
-    val costTotal: Long,      // SUM(order_costs.amountAgorot)
+    val sellingTotal: Long,   // SUM(quantitySold * unitPriceAgorot) - discountAgorot
+    val goodsUsdCents: Long,  // SUM(quantityOrdered * unitCostUsdCents)
+    val costTotal: Long,      // ₪ after converting USD lines (see Step 5)
     val paidTotal: Long,      // SUM(payments.amountAgorot)
     val deliveredAt: Instant?, val activeShipments: Int,
 )
@@ -223,4 +245,30 @@ UNPAID        paidTotal == 0
 DEPOSIT_PAID  0 < paidTotal < sellingTotal      (warn if paidTotal < depositDue: "partial deposit")
 FULLY_PAID    paidTotal == sellingTotal
 OVERPAID      paidTotal >  sellingTotal         (warning chip)
+```
+
+## Stock pins (proposed — pending confirmation)
+
+The spreadsheet also tracks **group designs bought in bulk and sold piece by piece** to many individuals
+(own sheet per design, ₪10–12 per pin, domestic shipping charged or self pickup, remaining stock counted).
+
+```kotlin
+@Entity(tableName = "stock_batches")
+data class StockBatchEntity(        // one supplier purchase of a design for stock; costs as in an order
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val designId: Long, val quantityReceived: Int, val purchasedOn: LocalDate, val usdRate: Double?,
+)
+
+@Entity(tableName = "stock_sales")
+data class StockSaleEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val batchId: Long, val customerId: Long, val soldOn: LocalDate,
+    val quantity: Int, val unitPriceAgorot: Long,
+    val shippingChargedAgorot: Long,  // e.g. ₪20 when mailed, 0 for pickup
+    val shippingCostAgorot: Long,     // what the post office charged
+    val sent: Boolean, val arrived: Boolean,
+    val postTrackingNumber: String?,  // Israel Post "RR…IL" – shown/copied, not auto-tracked
+)
+// remaining stock = quantityReceived − SUM(stock_sales.quantity) − written-off
+// payments for stock sales reuse the payments table (orderId nullable + stockSaleId)
 ```
