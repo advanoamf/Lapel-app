@@ -66,6 +66,29 @@ class OrderRepository @Inject constructor(
         id
     }
 
+    /** Saves edits to an order's details and replaces its designs. Costs and payments are edited separately. */
+    suspend fun updateOrder(order: OrderEntity, items: List<OrderItemEntity>) = db.withTransaction {
+        val existing = orders.getOrder(order.id) ?: return@withTransaction
+        orders.updateOrder(
+            order.copy(
+                fulfillmentStatus = existing.fulfillmentStatus,
+                deliveredAt = existing.deliveredAt,
+                completedAt = existing.completedAt,
+                createdAt = existing.createdAt,
+                updatedAt = clock.instant(),
+            ),
+        )
+        orders.deleteItemsForOrder(order.id)
+        orders.insertItems(items.map { it.copy(id = 0, orderId = order.id) })
+        reconcile(order.id)
+    }
+
+    suspend fun addCost(cost: OrderCostEntity) = db.withTransaction {
+        orders.insertCosts(listOf(cost.copy(id = 0)))
+    }
+
+    suspend fun deleteCost(cost: OrderCostEntity) = orders.deleteCost(cost)
+
     /** Manual status change from the order screen (e.g. "Ordered from Alibaba", "Delivered" for pickup). */
     suspend fun setStatus(orderId: Long, status: FulfillmentStatus) = db.withTransaction {
         val order = orders.getOrder(orderId) ?: return@withTransaction

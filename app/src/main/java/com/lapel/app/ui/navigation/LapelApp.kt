@@ -1,6 +1,7 @@
 package com.lapel.app.ui.navigation
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Dashboard
@@ -25,16 +26,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.lapel.app.R
 import com.lapel.app.ui.common.ComingSoonScreen
+import com.lapel.app.ui.customers.CustomerDetailScreen
+import com.lapel.app.ui.customers.CustomerEditScreen
+import com.lapel.app.ui.customers.CustomersScreen
+import com.lapel.app.ui.orders.OrderDetailScreen
+import com.lapel.app.ui.orders.OrderEditScreen
+import com.lapel.app.ui.orders.OrdersScreen
 import com.lapel.app.ui.settings.SettingsScreen
-import kotlinx.serialization.Serializable
-
-@Serializable object DashboardRoute
-@Serializable object OrdersRoute
-@Serializable object StockRoute
-@Serializable object CustomersRoute
-@Serializable object SettingsRoute
 
 private enum class TopLevelDestination(
     val route: Any,
@@ -78,12 +79,57 @@ fun LapelApp() {
         NavHost(
             navController = navController,
             startDestination = DashboardRoute,
-            modifier = Modifier.padding(padding),
+            modifier = Modifier.padding(padding).consumeWindowInsets(padding),
         ) {
             composable<DashboardRoute> { ComingSoonScreen(R.string.tab_dashboard, R.string.coming_dashboard) }
-            composable<OrdersRoute> { ComingSoonScreen(R.string.tab_orders, R.string.coming_orders) }
+            composable<OrdersRoute> {
+                OrdersScreen(
+                    onOpen = { navController.navigate(OrderDetailRoute(it)) },
+                    onAdd = { navController.navigate(OrderEditRoute()) },
+                )
+            }
             composable<StockRoute> { ComingSoonScreen(R.string.tab_stock, R.string.coming_stock) }
-            composable<CustomersRoute> { ComingSoonScreen(R.string.tab_customers, R.string.coming_customers) }
+            composable<CustomersRoute> {
+                CustomersScreen(
+                    onOpen = { navController.navigate(CustomerDetailRoute(it)) },
+                    onAdd = { navController.navigate(CustomerEditRoute()) },
+                )
+            }
+            composable<CustomerDetailRoute> {
+                CustomerDetailScreen(
+                    onBack = { navController.popBackStack() },
+                    onEdit = { navController.navigate(CustomerEditRoute(it)) },
+                    onOpenOrder = { navController.navigate(OrderDetailRoute(it)) },
+                    onNewOrder = { navController.navigate(OrderEditRoute(customerId = it)) },
+                )
+            }
+            composable<CustomerEditRoute> {
+                CustomerEditScreen(
+                    onBack = { navController.popBackStack() },
+                    onSaved = { navController.popBackStack() },
+                )
+            }
+            composable<OrderDetailRoute> {
+                OrderDetailScreen(
+                    onBack = { navController.popBackStack() },
+                    onEdit = { navController.navigate(OrderEditRoute(id = it)) },
+                    onOpenCustomer = { navController.navigate(CustomerDetailRoute(it)) },
+                )
+            }
+            composable<OrderEditRoute> { entry ->
+                val isNew = entry.toRoute<OrderEditRoute>().id == 0L
+                OrderEditScreen(
+                    onBack = { navController.popBackStack() },
+                    onSaved = { id ->
+                        if (isNew) {
+                            navController.navigate(OrderDetailRoute(id)) { popUpTo<OrderEditRoute> { inclusive = true } }
+                        } else {
+                            navController.popBackStack()
+                        }
+                    },
+                    onNewCustomer = { navController.navigate(CustomerEditRoute()) },
+                )
+            }
             composable<SettingsRoute> { SettingsScreen() }
         }
     }

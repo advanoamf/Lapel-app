@@ -40,6 +40,9 @@ interface OrderDao {
     fun observeItems(orderId: Long): Flow<List<OrderItemEntity>>
 
     @Insert suspend fun insertItems(items: List<OrderItemEntity>)
+
+    @Query("DELETE FROM order_items WHERE orderId = :orderId")
+    suspend fun deleteItemsForOrder(orderId: Long)
     @Update suspend fun updateItem(item: OrderItemEntity)
     @Delete suspend fun deleteItem(item: OrderItemEntity)
 
