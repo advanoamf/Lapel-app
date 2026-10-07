@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A round enamel pin with a star. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFD54F"
+        android:pathData="M54,30a24,24 0,1 1,0 48a24,24 0,1 1,0 -48z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,35a19,19 0,1 1,0 38a19,19 0,1 1,0 -38z" />
+    <path
+        android:fillColor="#1F5FA8"
+        android:pathData="M54,40l4.1,8.4 9.2,1.3 -6.7,6.5 1.6,9.2 -8.2,-4.3 -8.2,4.3 1.6,-9.2 -6.7,-6.5 9.2,-1.3z" />
+</vector>

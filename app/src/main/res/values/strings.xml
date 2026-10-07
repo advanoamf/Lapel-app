@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hebrew is the default language. English translations live in values-en/. -->
+<resources>
+    <string name="app_name">ניהול סיכות</string>
+
+    <string name="tab_dashboard">ראשי</string>
+    <string name="tab_orders">הזמנות</string>
+    <string name="tab_stock">מלאי</string>
+    <string name="tab_customers">לקוחות</string>
+    <string name="tab_settings">הגדרות</string>
+
+    <string name="coming_dashboard">כסף לגבייה, רווח החודש, משלוחים בדרך והזמנות באיחור יופיעו כאן.</string>
+    <string name="coming_orders">רשימת ההזמנות, חיפוש וסינון: לא שולם, בדרך, נמסר ולא שולם, הושלם.</string>
+    <string name="coming_stock">סיכות במלאי: כמה נשארו, מכירות בודדות ומי עוד חייב.</string>
+    <string name="coming_customers">לקוחות, סניפים, תנאי תשלום וכמה כל לקוח חייב.</string>
+    <string name="coming_settings">פרטי FedEx, תזכורות, גיבוי וייצוא.</string>
+</resources>

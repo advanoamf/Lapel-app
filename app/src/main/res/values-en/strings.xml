@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Lapel Pins</string>
+
+    <string name="tab_dashboard">Home</string>
+    <string name="tab_orders">Orders</string>
+    <string name="tab_stock">Stock</string>
+    <string name="tab_customers">Customers</string>
+    <string name="tab_settings">Settings</string>
+
+    <string name="coming_dashboard">Money to collect, profit this month, shipments in transit and overdue orders will appear here.</string>
+    <string name="coming_orders">Order list with search and filters: unpaid, in transit, delivered-unpaid, completed.</string>
+    <string name="coming_stock">Stock pins: how many are left, single sales and who still owes money.</string>
+    <string name="coming_customers">Customers, branches, payment terms and how much each one owes.</string>
+    <string name="coming_settings">FedEx details, reminders, backup and export.</string>
+</resources>
