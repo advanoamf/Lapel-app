@@ -79,6 +79,8 @@ data class StockSaleEntity(
     val shippingChargedAgorot: Long,
     /** What the post office actually cost. */
     val shippingCostAgorot: Long,
+    /** Price reduction agreed with this buyer. */
+    val discountAgorot: Long = 0,
     val sent: Boolean,
     val arrived: Boolean,
     /** Israel Post number ("RR…IL"); shown and copied, not tracked automatically. */

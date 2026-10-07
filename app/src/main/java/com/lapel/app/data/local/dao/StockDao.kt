@@ -48,7 +48,7 @@ interface StockDao {
         """
         SELECT b.id AS batchId, d.id AS designId, d.name AS designName, b.quantityReceived, b.writtenOff,
                (SELECT COALESCE(SUM(s.quantity), 0) FROM stock_sales s WHERE s.batchId = b.id) AS sold,
-               (SELECT COALESCE(SUM(s.quantity * s.unitPriceAgorot + s.shippingChargedAgorot), 0)
+               (SELECT COALESCE(SUM(s.quantity * s.unitPriceAgorot + s.shippingChargedAgorot - s.discountAgorot), 0)
                   FROM stock_sales s WHERE s.batchId = b.id) AS revenue,
                (SELECT COALESCE(SUM(p.amountAgorot), 0) FROM payments p
                   JOIN stock_sales s ON s.id = p.stockSaleId WHERE s.batchId = b.id) AS paid,

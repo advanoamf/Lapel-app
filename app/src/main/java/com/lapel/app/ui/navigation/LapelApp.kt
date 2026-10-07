@@ -27,6 +27,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.lapel.app.R
 import com.lapel.app.ui.common.ComingSoonScreen
+import com.lapel.app.ui.settings.SettingsScreen
 import kotlinx.serialization.Serializable
 
 @Serializable object DashboardRoute
@@ -37,7 +38,7 @@ import kotlinx.serialization.Serializable
 
 private enum class TopLevelDestination(
     val route: Any,
-    @StringRes val label: Int,
+    @param:StringRes val label: Int,
     val icon: ImageVector,
 ) {
     DASHBOARD(DashboardRoute, R.string.tab_dashboard, Icons.Outlined.Dashboard),
@@ -83,7 +84,7 @@ fun LapelApp() {
             composable<OrdersRoute> { ComingSoonScreen(R.string.tab_orders, R.string.coming_orders) }
             composable<StockRoute> { ComingSoonScreen(R.string.tab_stock, R.string.coming_stock) }
             composable<CustomersRoute> { ComingSoonScreen(R.string.tab_customers, R.string.coming_customers) }
-            composable<SettingsRoute> { ComingSoonScreen(R.string.tab_settings, R.string.coming_settings) }
+            composable<SettingsRoute> { SettingsScreen() }
         }
     }
 }

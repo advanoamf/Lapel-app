@@ -13,5 +13,20 @@
     <string name="coming_orders">רשימת ההזמנות, חיפוש וסינון: לא שולם, בדרך, נמסר ולא שולם, הושלם.</string>
     <string name="coming_stock">סיכות במלאי: כמה נשארו, מכירות בודדות ומי עוד חייב.</string>
     <string name="coming_customers">לקוחות, סניפים, תנאי תשלום וכמה כל לקוח חייב.</string>
-    <string name="coming_settings">פרטי FedEx, תזכורות, גיבוי וייצוא.</string>
+    <string name="action_close">סגירה</string>
+    <string name="action_cancel">ביטול</string>
+
+    <string name="import_title">ייבוא מהגיליון הקיים</string>
+    <string name="import_description">בחרו את קובץ האקסל של ההזמנות. ההזמנות, הלקוחות, התשלומים והמלאי יועברו לאפליקציה. לפני השמירה תוצג תצוגה מקדימה.</string>
+    <string name="import_pick_file">בחירת קובץ אקסל</string>
+    <string name="import_working">קורא את הקובץ…</string>
+    <string name="import_preview_counts">%1$d לקוחות · %2$d הזמנות · %3$d סיכות מלאי</string>
+    <string name="import_preview_revenue">הכנסות %1$s · רווח %2$s</string>
+    <string name="import_preview_outstanding">כסף לגבייה: %1$s</string>
+    <string name="import_confirm">ייבוא</string>
+    <string name="import_blocked_existing">כבר יש הזמנות באפליקציה. הייבוא אפשרי רק לאפליקציה ריקה כדי לא ליצור כפילויות.</string>
+    <string name="import_outstanding_title">הזמנות שעדיין חייבים עליהן</string>
+    <string name="import_warnings_title">הערות לבדיקה</string>
+    <string name="import_done">יובאו %1$d לקוחות, %2$d הזמנות, %3$d סיכות מלאי עם %4$d מכירות ו־%5$d תשלומים.</string>
+    <string name="import_failed">הייבוא נכשל: %1$s</string>
 </resources>

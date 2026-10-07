@@ -12,8 +12,9 @@ data class StockSaleLine(
     /** What the post office actually cost. */
     val shippingCost: Money,
     val payments: List<Money>,
+    val discount: Money = Money.ZERO,
 ) {
-    val total: Money get() = unitPrice * quantity + shippingCharged
+    val total: Money get() = unitPrice * quantity + shippingCharged - discount
     val paid: Money get() = payments.sum()
     val outstanding: Money get() = (total - paid).coerceAtLeastZero()
 }

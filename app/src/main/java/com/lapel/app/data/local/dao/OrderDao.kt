@@ -29,6 +29,9 @@ interface OrderDao {
     @Query("SELECT * FROM orders WHERE id = :orderId")
     suspend fun getOrder(orderId: Long): OrderEntity?
 
+    @Query("SELECT COUNT(*) FROM orders")
+    suspend fun count(): Int
+
     @Insert suspend fun insertOrder(order: OrderEntity): Long
     @Update suspend fun updateOrder(order: OrderEntity)
     @Delete suspend fun deleteOrder(order: OrderEntity)

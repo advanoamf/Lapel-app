@@ -12,5 +12,20 @@
     <string name="coming_orders">Order list with search and filters: unpaid, in transit, delivered-unpaid, completed.</string>
     <string name="coming_stock">Stock pins: how many are left, single sales and who still owes money.</string>
     <string name="coming_customers">Customers, branches, payment terms and how much each one owes.</string>
-    <string name="coming_settings">FedEx details, reminders, backup and export.</string>
+    <string name="action_close">Close</string>
+    <string name="action_cancel">Cancel</string>
+
+    <string name="import_title">Import from the existing spreadsheet</string>
+    <string name="import_description">Choose the orders Excel file. Orders, customers, payments and stock will be copied into the app. You will see a preview before anything is saved.</string>
+    <string name="import_pick_file">Choose Excel file</string>
+    <string name="import_working">Reading the file…</string>
+    <string name="import_preview_counts">%1$d customers · %2$d orders · %3$d stock designs</string>
+    <string name="import_preview_revenue">Revenue %1$s · profit %2$s</string>
+    <string name="import_preview_outstanding">Money to collect: %1$s</string>
+    <string name="import_confirm">Import</string>
+    <string name="import_blocked_existing">The app already has orders. Import only works on an empty app, to avoid duplicates.</string>
+    <string name="import_outstanding_title">Orders still owed</string>
+    <string name="import_warnings_title">Notes to check</string>
+    <string name="import_done">Imported %1$d customers, %2$d orders, %3$d stock designs with %4$d sales and %5$d payments.</string>
+    <string name="import_failed">Import failed: %1$s</string>
 </resources>
