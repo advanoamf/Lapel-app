@@ -4,11 +4,11 @@
 
 | Topic | Decision |
 |---|---|
-| Payments | **No payment-gateway integration.** Customers pay outside the app (Bit, PayBox, bank transfer). The owner records payments manually; the app's job is to **remind** him to collect. |
+| Payments | **No payment-gateway integration.** Customers pay outside the app (Bit, PayBox, bank transfer). The owner records payments manually; the app's job is to **remind** the owner to collect. |
 | Payment schedule | **50% deposit** when the Alibaba order is placed, **50% balance** when the product is delivered to the client. |
 | Server | **None (Option A).** Everything runs on-device; WorkManager polls FedEx directly. |
-| Currency | **ILS (₪)** everywhere. |
-| Carrier | **Always FedEx** → FedEx Track API, no aggregator. |
+| Currency | **ILS (₪)** everywhere. Alibaba costs are entered as the ₪ amount actually charged to the card (no FX conversion in the app). |
+| Carrier | **Always FedEx** → FedEx Track API, no aggregator. Owner has a FedEx account for production API credentials. |
 | Order structure | One order can have **several pin designs (line items)** and **several FedEx tracking numbers**. |
 | Users / devices | Single user, single phone. Room is the only database; backup via Android Auto Backup + manual export. |
 | Overdue rule | Deposit overdue: order confirmed but deposit not recorded. Balance overdue: shipment **Delivered** and balance not recorded after N days (default 3, configurable). |
