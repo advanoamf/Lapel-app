@@ -49,10 +49,10 @@ Quantity and price swapped in two rows (95, 36B) — totals still right by luck.
 
 ## What changes in the app because of this
 
-1. **Costs in USD + per-order rate + 3% card fee** (as the owner already works), plus ₪ lines for customs, referral commission (המלצה), bank fee.
+1. **Costs in ₪ as actually charged** (owner's choice) — no exchange-rate cells at all. Customs, referral commission (המלצה) and the **₪8 bank fee** (the `+8` in the sheet) are normal cost lines. The importer converts old rows once: `(units×unit$ + mold$ + shipping$) × rate × 1.03`, using each row's **own** rate (3.84 where missing).
 2. **Qty ordered vs qty sold** per design (spares are a real cost).
 3. **Designs** reused across orders — reorders (008B, 25B…25E, 42B…42I, 91B…91D) carry no mold cost.
 4. **Customer = contact + branch/organization** and **payment terms** (net+60 for some institutions).
 5. **Delivery method** FedEx / self pickup; **"arrived OK?"** check.
-6. **Stock pins** (bulk design, many small buyers, domestic post, stock count) — proposed v1 feature, awaiting confirmation.
+6. **Stock pins** (bulk design, many small buyers, domestic post, stock count) — **confirmed for v1**.
 7. **Import**: a one-time import of this workbook into the app (Phase 2), with a report of rows it could not read, so history and current debts carry over.

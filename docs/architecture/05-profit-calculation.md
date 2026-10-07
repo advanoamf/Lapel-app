@@ -8,15 +8,15 @@ used by every screen, the dashboard and CSV export — so the numbers are identi
 | Input | Source |
 |---|---|
 | `sellingTotal` | Σ `quantitySold × unitPriceAgorot` − `discountAgorot` |
-| `usdTotal` | Σ `quantityOrdered × unitCostUsdCents` + USD cost lines (mold, supplier shipping) |
-| `effectiveRate` | `usdRate × (1 + cardFeePercent/100)` — e.g. 3.84 × 1.03 = 3.955 |
-| `costTotal` | `round(usdTotal × effectiveRate)` + ₪ cost lines (customs, referral commission, FedEx, bank fee, other) |
+| `costTotal` | Σ `order_costs.amountAgorot` — Alibaba payment (₪ charged), customs, referral commission, bank fee (₪8 default), FedEx, other |
 | `paidTotal` | Σ `payments.amountAgorot` |
 | `depositPercent` | order field, default 50 |
 | `totalQuantity` | Σ `quantitySold` |
 
-This is exactly the spreadsheet's formula `(units×unit$ + mold$ + shipping$) × rate×1.03 + commission + customs`,
-with two fixes: **customs is always included**, and the **rate is stored on the order itself** so no row can point at another row's rate.
+Compared with the spreadsheet: costs are the real ₪ amounts (no exchange-rate cell to point at the wrong row),
+**customs is always included**, and the ₪8 bank fee is a normal cost line instead of a hand-typed `+8`.
+
+`costPerPin` uses the Alibaba payment ÷ **quantity ordered** (spares included); profit uses **quantity sold**.
 
 ## Per-order formulas
 

@@ -8,12 +8,13 @@ ViewModels expose one `StateFlow<UiState>` built from Room flows with `combine` 
 
 ```
 Onboarding (first run: notifications permission, FedEx credentials – skippable)
-└── Main (bottom bar)
+└── Main (bottom bar: Dashboard · Orders · Stock · Customers · Settings)
     ├── Dashboard ───────────────┐
     ├── Orders ── OrderDetail ───┼── OrderEdit
     │               ├─ RecordPaymentSheet
     │               ├─ AddTrackingSheet (type / paste / scan)
     │               └─ AddCostSheet
+    ├── Stock ── StockDesignDetail (sales list, remaining) ── AddStockSaleSheet
     ├── Customers ── CustomerDetail ── CustomerEdit
     └── Settings ── FedExCredentials / Reminders / Backup & Export
 Deep link: lapel://order/{id} → OrderDetail
@@ -52,10 +53,13 @@ Single scrolling form: customer picker (+ create inline), title, order date (dat
 - **Add tracking:** text field + **Scan** (Google code scanner — no camera permission needed) + paste-from-clipboard suggestion. Validates FedEx format (12/15/20/22 digits) and triggers an immediate sync.
 - **Add cost:** type chips (Alibaba goods · Supplier shipping · FedEx · Bank/FX fee · Other), amount ₪, note.
 
-### 6. Customers
+### 6. Stock pins
+List of stock designs with **remaining pins** and money still owed. Design detail: batches bought, sales list (buyer, qty, price, mail ₪20 / pickup, sent ✓, arrived ✓, Israel Post number), "Add sale" sheet with quick 50/50 payment buttons. Low-stock warning.
+
+### 7. Customers
 List with search and outstanding badge. Detail: contact actions, customer since, totals (orders, revenue, profit, owed), order list. Edit form includes **customer since** date.
 
-### 7. Settings
+### 8. Settings
 FedEx credentials + Test connection + environment (debug only) · sync interval · reminder interval (days) & daily reminder time · notification toggles per channel · CSV export (orders, payments, costs) · backup/restore DB file · app language.
 
 ## Status indicators (consistent everywhere)
@@ -70,4 +74,4 @@ FedEx credentials + Test connection + environment (debug only) · sync interval 
 Colors come from Material 3 theme tokens (light + dark, dynamic color off for consistent status colors); every chip also has an icon/text so color is never the only signal.
 
 ## Language & layout
-Strings in `strings.xml` with **Hebrew and English**; Compose mirrors layout automatically for RTL. Amounts formatted with `NumberFormat` for `he-IL` (₪1,234.50). Dates `dd/MM/yyyy`.
+**Hebrew is the default language** (`values/strings.xml`), English in `values-en/`; Compose mirrors layout automatically for RTL. Amounts formatted with `NumberFormat` for `he-IL` (₪1,234.50). Dates `dd/MM/yyyy`.

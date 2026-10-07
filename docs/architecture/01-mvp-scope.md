@@ -7,12 +7,13 @@
 | Payments | **No payment-gateway integration.** Customers pay outside the app (Bit, PayBox, bank transfer). The owner records payments manually; the app's job is to **remind** the owner to collect. |
 | Payment schedule | **50% deposit** when the Alibaba order is placed, **50% balance** when the product is delivered to the client. |
 | Server | **None (Option A).** Everything runs on-device; WorkManager polls FedEx directly. |
-| Currency | Reports in **ILS (₪)**. Supplier costs are entered **in USD as today** (unit price, mold, shipping) with a **per-order USD rate + 3% card fee** (default), or directly in ₪. Customs, referral commission and fees in ₪. See [07](07-spreadsheet-review.md). |
+| Currency | **ILS (₪) only.** Supplier costs are entered as the **₪ amount actually charged** for the Alibaba order (no USD entry in the app). Default **₪8 bank fee** per order. Customs and referral commission in ₪. |
 | Carrier | **Always FedEx** → FedEx Track API, no aggregator. Owner has a FedEx account for production API credentials. |
 | Order structure | One order can have **several pin designs (line items)** and **several FedEx tracking numbers**. Each line has **qty ordered from supplier** and **qty sold to client** (extras/defects). |
 | Customers | Contact person + **branch / organization** (סניף). Optional **payment terms** per customer (immediate, or net+60 – "שוטף+60"). |
 | Delivery | FedEx direct to client, or **self pickup** (no tracking). |
-| Stock pins | Group designs bought in bulk and sold in small quantities to many individuals (סיכת קווה / רעים / חיים / שרוליק) — **proposed for v1, pending owner confirmation**. |
+| Stock pins | **In v1.** Designs bought in bulk and sold a few at a time to many individuals (סיכת קווה / רעים / חיים / שרוליק): price per pin, mail (Israel Post) or pickup, sent/arrived, remaining stock. |
+| Language | **Hebrew (RTL) is the default**, English as second language. |
 | Users / devices | Single user, single phone. Room is the only database; backup via Android Auto Backup + manual export. |
 | Overdue rule | Deposit overdue: order confirmed but deposit not recorded. Balance overdue: shipment **Delivered** and balance not recorded after N days (default 3) — or after the customer's payment terms (e.g. net+60). |
 
@@ -44,7 +45,7 @@ still owed — exactly the case that gets forgotten. So every order has:
 
 ## Later (v1.1+)
 - Profit charts per month / customer / pin type
-- PDF quote / receipt (Hebrew + English)
+- PDF quote / receipt
 - Duplicate order ("reorder") and supplier comparison
 - Optional cloud backup (Google Drive) if a second phone is added
 

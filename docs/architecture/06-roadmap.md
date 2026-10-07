@@ -27,6 +27,10 @@ Each phase ends with a working, installable app.
 - Dashboard cards + "Needs action" list.
 - **Done when:** profit and "money to collect" match a hand-calculated spreadsheet for your real orders.
 
+## Phase 3b — Stock pins
+- Designs, stock batches, stock sales, remaining-stock count, sales payments; import of the stock sheets (שרוליק, סיכת חיים, …).
+- **Done when:** remaining stock and owed amounts per stock design match the spreadsheet.
+
 ## Phase 4 — Reminders & notifications (offline)
 - Notification channels, onboarding permission, `ReminderPolicy`, `ReminderWorker`, `reminder_log`, actions (Record payment / WhatsApp / Snooze), deep links.
 - Manual "Mark delivered" triggers the collect-balance reminder (works even before FedEx is connected).
@@ -41,7 +45,7 @@ Each phase ends with a working, installable app.
 - **Done when:** a real FedEx shipment moves the order to Shipped and Delivered by itself and fires the notifications.
 
 ## Phase 6 — Polish
-- Hebrew + English strings, RTL check, dark mode, empty states, number/date formatting.
+- Hebrew strings from day one (Phase 0), English translation, RTL review, dark mode, empty states, number/date formatting.
 - CSV export, DB backup/restore file, Android Auto Backup rules (credentials excluded).
 - Monthly profit view (simple list; charts are v1.1).
 

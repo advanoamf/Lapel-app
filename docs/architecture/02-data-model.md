@@ -48,8 +48,6 @@ data class OrderEntity(
     val dueDate: LocalDate?,               // promised delivery date to client
     val fulfillmentStatus: FulfillmentStatus,
     val depositPercent: Int = 50,          // payment plan; 50/50 by default
-    val usdRate: Double?,                  // ₪ per $ on the day the Alibaba order was paid (frozen per order)
-    val cardFeePercent: Double = 3.0,      // bank/card FX fee on USD payments
     val discountAgorot: Long = 0,          // agreed discount / adjustment to the client
     val deliveryMethod: DeliveryMethod,    // FEDEX, SELF_PICKUP
     val qualityOk: Boolean?,               // "תקינות?" – received OK
@@ -77,7 +75,6 @@ data class OrderItemEntity(
     val quantityOrdered: Int,      // from supplier (incl. spares)
     val quantitySold: Int,         // billed to the client
     val unitPriceAgorot: Long,     // selling price per pin (₪)
-    val unitCostUsdCents: Long,    // Alibaba price per pin ($)
     val artworkUri: String?,       // copied into app-private storage
 )
 
@@ -85,9 +82,9 @@ data class OrderItemEntity(
 data class OrderCostEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val orderId: Long,
-    val type: CostType,            // MOLD, SUPPLIER_SHIPPING, CUSTOMS, REFERRAL_COMMISSION, FEDEX, BANK_FEE, OTHER
-    val currency: Currency,        // USD or ILS
-    val amountMinor: Long,         // cents if USD, agorot if ILS (converted with the order's usdRate + card fee)
+    val type: CostType,            // ALIBABA_PAYMENT (₪ charged: pins + mold + shipping), CUSTOMS, REFERRAL_COMMISSION,
+                                   // BANK_FEE (₪8 added automatically to new orders), FEDEX, OTHER
+    val amountAgorot: Long,
     val note: String?,
 )
 
@@ -179,8 +176,7 @@ data class OrderSummary(
     val orderId: Long, val customerName: String, val title: String,
     val orderDate: LocalDate, val fulfillmentStatus: FulfillmentStatus, val depositPercent: Int,
     val sellingTotal: Long,   // SUM(quantitySold * unitPriceAgorot) - discountAgorot
-    val goodsUsdCents: Long,  // SUM(quantityOrdered * unitCostUsdCents)
-    val costTotal: Long,      // ₪ after converting USD lines (see Step 5)
+    val costTotal: Long,      // SUM(order_costs.amountAgorot)
     val paidTotal: Long,      // SUM(payments.amountAgorot)
     val deliveredAt: Instant?, val activeShipments: Int,
 )
@@ -247,7 +243,7 @@ FULLY_PAID    paidTotal == sellingTotal
 OVERPAID      paidTotal >  sellingTotal         (warning chip)
 ```
 
-## Stock pins (proposed — pending confirmation)
+## Stock pins (v1)
 
 The spreadsheet also tracks **group designs bought in bulk and sold piece by piece** to many individuals
 (own sheet per design, ₪10–12 per pin, domestic shipping charged or self pickup, remaining stock counted).
@@ -256,7 +252,8 @@ The spreadsheet also tracks **group designs bought in bulk and sold piece by pie
 @Entity(tableName = "stock_batches")
 data class StockBatchEntity(        // one supplier purchase of a design for stock; costs as in an order
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val designId: Long, val quantityReceived: Int, val purchasedOn: LocalDate, val usdRate: Double?,
+    val designId: Long, val quantityReceived: Int, val purchasedOn: LocalDate,
+    // batch costs (Alibaba ₪, customs, bank fee) live in order_costs-style rows: stock_batch_costs
 )
 
 @Entity(tableName = "stock_sales")
