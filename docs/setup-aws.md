@@ -28,7 +28,7 @@
 2. **New repository secret**:
    - Name: `AWS_DEPLOY_ROLE_ARN`  Value: הערך שהעתקת בשלב 2.9 → **Add secret**.
 3. **New repository secret** שוב:
-   - Name: `LAPEL_PASSWORD`  Value: סיסמה שתבחר לכניסה מהמחשב ומהאפליקציה (לפחות 10 תווים) → **Add secret**.
+   - Name: `LAPEL_PASSWORD`  Value: סיסמה שתבחר לכניסה מהמחשב ומהאפליקציה — **לפחות 10 תווים, בלי רווחים ובלי פסיקים** (אותיות באנגלית, ספרות וסימנים כמו ! @ # מותרים) → **Add secret**.
 
 זהו. תגיד לי כשסיימת ואפעיל את ההעלאה הראשונה של השרת.
 

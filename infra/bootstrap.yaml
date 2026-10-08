@@ -83,6 +83,10 @@ Resources:
                 Effect: Allow
                 Action: logs:*
                 Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/lapel-*
+              - Sid: LogsDescribe
+                Effect: Allow
+                Action: logs:DescribeLogGroups
+                Resource: "*"
               - Sid: Scheduler
                 Effect: Allow
                 Action: scheduler:*
@@ -91,7 +95,8 @@ Resources:
                 Effect: Allow
                 Action: [iam:CreateRole, iam:DeleteRole, iam:GetRole, iam:PassRole, iam:TagRole, iam:UntagRole,
                          iam:PutRolePolicy, iam:DeleteRolePolicy, iam:GetRolePolicy,
-                         iam:AttachRolePolicy, iam:DetachRolePolicy, iam:UpdateAssumeRolePolicy]
+                         iam:AttachRolePolicy, iam:DetachRolePolicy, iam:UpdateAssumeRolePolicy,
+                         iam:ListRolePolicies, iam:ListAttachedRolePolicies, iam:ListRoleTags]
                 Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/lapel-*
 
   MonthlyBudget:

@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Lapel server – one Lambda with a Function URL and one DynamoDB table (AWS always-free tier).
+
+Parameters:
+  Password:
+    Type: String
+    NoEcho: true
+    MinLength: 10
+    Description: Login password for the app and the web page (from the LAPEL_PASSWORD GitHub secret)
+
+Resources:
+  DataTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain          # never lose data, even if the stack is removed
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: lapel-data
+      BillingMode: PROVISIONED      # 5+5 units stay inside the 25 free units
+      AttributeDefinitions:
+        - { AttributeName: pk, AttributeType: S }
+        - { AttributeName: sk, AttributeType: S }
+        - { AttributeName: gsi1pk, AttributeType: S }
+        - { AttributeName: syncedAt, AttributeType: N }
+      KeySchema:
+        - { AttributeName: pk, KeyType: HASH }
+        - { AttributeName: sk, KeyType: RANGE }
+      ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
+      GlobalSecondaryIndexes:
+        - IndexName: bySync
+          KeySchema:
+            - { AttributeName: gsi1pk, KeyType: HASH }
+            - { AttributeName: syncedAt, KeyType: RANGE }
+          Projection: { ProjectionType: ALL }
+          ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true   # restore to any second of the last 35 days
+
+  ApiLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/lapel-api
+      RetentionInDays: 14
+
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: ApiLogs
+    Properties:
+      FunctionName: lapel-api
+      Runtime: java21
+      Architectures: [arm64]
+      Handler: com.lapel.server.Handler::handleRequest
+      CodeUri: build/distributions/lapel-server.zip
+      MemorySize: 1024
+      Timeout: 29
+      AutoPublishAlias: live
+      SnapStart:
+        ApplyOn: PublishedVersions        # fast start without paying for always-on capacity
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref DataTable
+          LAPEL_PASSWORD: !Ref Password
+          JAVA_TOOL_OPTIONS: "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DataTable
+      FunctionUrlConfig:
+        AuthType: NONE                    # the app checks its own password token
+
+Outputs:
+  Url:
+    Description: Address of the server – open it in the browser, and enter it in the phone app
+    Value: !GetAtt ApiFunctionUrl.FunctionUrl

@@ -21,6 +21,9 @@ jobs:
       - name: Domain unit tests
         run: ./gradlew -p domain test --console=plain
 
+      - name: Server unit tests
+        run: ./gradlew -p server test --console=plain
+
       - name: App unit tests, lint and debug build
         run: ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --console=plain --stacktrace
 

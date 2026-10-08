@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ניהול סיכות</title>
+<style>
+  :root { color-scheme: light dark; --primary: #1F5FA8; }
+  body { font-family: system-ui, "Segoe UI", Arial, sans-serif; margin: 0; background: Canvas; color: CanvasText; }
+  main { max-width: 480px; margin: 48px auto; padding: 0 16px; }
+  h1 { font-size: 1.6rem; }
+  input, button { font: inherit; padding: 10px 12px; border-radius: 8px; width: 100%; box-sizing: border-box; }
+  input { border: 1px solid #8888; margin-bottom: 12px; }
+  button { background: var(--primary); color: white; border: 0; cursor: pointer; }
+  .card { border: 1px solid #8884; border-radius: 12px; padding: 16px; }
+  .muted { opacity: .7; }
+  .error { color: #c62828; }
+</style>
+</head>
+<body>
+<main>
+  <h1>ניהול סיכות</h1>
+  <div class="card" id="login">
+    <label for="pw">סיסמה</label>
+    <input id="pw" type="password" autocomplete="current-password">
+    <button id="go">כניסה</button>
+    <p class="error" id="err" hidden></p>
+  </div>
+  <div class="card" id="status" hidden>
+    <p>השרת פועל. <span id="count"></span></p>
+    <p class="muted">מסכי ההזמנות, הלקוחות והתשלומים במחשב יתווספו בשלב הבא.</p>
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+async function load(token) {
+  const r = await fetch('/api/sync?since=0', { headers: { Authorization: 'Bearer ' + token } });
+  if (r.status === 401) { localStorage.removeItem('token'); return false; }
+  const data = await r.json();
+  const live = data.records.filter(x => !x.deleted);
+  const n = t => live.filter(x => x.type === t).length;
+  $('count').textContent = `שמורים ${n('ORDER')} הזמנות ו־${n('CUSTOMER')} לקוחות.`;
+  $('login').hidden = true; $('status').hidden = false;
+  return true;
+}
+$('go').onclick = async () => {
+  $('err').hidden = true;
+  const r = await fetch('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: $('pw').value }) });
+  if (!r.ok) { $('err').textContent = 'סיסמה שגויה'; $('err').hidden = false; return; }
+  const { token } = await r.json();
+  try { localStorage.setItem('token', token); } catch (e) {}
+  load(token);
+};
+$('pw').addEventListener('keydown', e => { if (e.key === 'Enter') $('go').click(); });
+let saved = null; try { saved = localStorage.getItem('token'); } catch (e) {}
+if (saved) load(saved);
+</script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+name: Deploy server
+
+on:
+  push:
+    branches: [claude/lapel-pin-app-architecture-nicohd]
+    paths: [server/**, domain/**, gradle/**, .github/workflows/deploy.yml]
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # sign in to AWS with the OIDC role from infra/bootstrap.yaml
+  contents: read
+
+concurrency: deploy-server
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check AWS setup
+        id: check
+        env:
+          ROLE: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          PW: ${{ secrets.LAPEL_PASSWORD }}
+        run: |
+          if [ -z "$ROLE" ] || [ -z "$PW" ]; then
+            echo "AWS is not set up yet (see docs/setup-aws.md) – skipping deploy." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.check.outputs.ready == 'true'
+
+      - uses: actions/setup-java@v4
+        if: steps.check.outputs.ready == 'true'
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+        if: steps.check.outputs.ready == 'true'
+
+      - name: Test and package server
+        if: steps.check.outputs.ready == 'true'
+        run: ./gradlew -p server test lambdaZip --console=plain
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        if: steps.check.outputs.ready == 'true'
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: eu-central-1
+
+      - uses: aws-actions/setup-sam@v2
+        if: steps.check.outputs.ready == 'true'
+        with:
+          use-installer: true
+
+      - name: Artifact bucket
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          BUCKET="lapel-artifacts-$(aws sts get-caller-identity --query Account --output text)"
+          aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null || \
+            aws s3api create-bucket --bucket "$BUCKET" --create-bucket-configuration LocationConstraint=eu-central-1
+          echo "BUCKET=$BUCKET" >> "$GITHUB_ENV"
+
+      - name: Deploy
+        if: steps.check.outputs.ready == 'true'
+        env:
+          PW: ${{ secrets.LAPEL_PASSWORD }}
+        run: |
+          sam deploy \
+            --template-file server/template.yaml \
+            --stack-name lapel-server \
+            --s3-bucket "$BUCKET" --s3-prefix server \
+            --capabilities CAPABILITY_IAM \
+            --no-confirm-changeset --no-fail-on-empty-changeset \
+            --parameter-overrides "Password=$PW"
+
+      - name: Server address
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          URL=$(aws cloudformation describe-stacks --stack-name lapel-server \
+            --query "Stacks[0].Outputs[?OutputKey=='Url'].OutputValue" --output text)
+          echo "Server: $URL"
+          echo "### Server address: $URL" >> "$GITHUB_STEP_SUMMARY"
+          curl -fsS "${URL}api/health"
