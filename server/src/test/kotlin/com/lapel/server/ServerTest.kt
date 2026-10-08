@@ -22,6 +22,8 @@ private class TestClock(var now: Instant = Instant.parse("2026-10-08T10:00:00Z")
     fun advance(ms: Long) { now = now.plusMillis(ms) }
 }
 
+private val HASH = PasswordHash.of("correct horse battery")
+
 private fun order(id: String, updatedAt: Long, number: String = "170", deleted: Boolean = false) =
     SyncRecord("ORDER", id, updatedAt, deleted, buildJsonObject { put("orderNumber", number) })
 
@@ -82,7 +84,7 @@ class AuthServiceTest {
     private val store = InMemoryRecordStore()
 
     @Test fun `right password gets a token that expires`() {
-        val auth = AuthService("correct horse battery", store, clock, Duration.ofDays(30))
+        val auth = AuthService(HASH, store, clock, Duration.ofDays(30))
         val login = assertNotNull(auth.login("correct horse battery"))
         assertTrue(auth.isValid(login.token))
         clock.advance(Duration.ofDays(31).toMillis())
@@ -90,18 +92,18 @@ class AuthServiceTest {
     }
 
     @Test fun `wrong password, tampered token and short password are refused`() {
-        val auth = AuthService("correct horse battery", store, clock)
+        val auth = AuthService(HASH, store, clock)
         assertNull(auth.login("guess"))
         val token = auth.login("correct horse battery")!!.token
         assertFalse(auth.isValid(token.dropLast(2) + "xx"))
         assertFalse(auth.isValid("nonsense"))
-        assertNull(AuthService("short", store, clock).login("short"))
+        assertNull(AuthService("not-a-hash", store, clock).login("not-a-hash"))
     }
 
     @Test fun `signing key is shared across instances through the store`() {
-        val a = AuthService("correct horse battery", store, clock)
+        val a = AuthService(HASH, store, clock)
         val token = a.login("correct horse battery")!!.token
-        val b = AuthService("correct horse battery", store, clock)
+        val b = AuthService(HASH, store, clock)
         assertTrue(b.isValid(token))
     }
 }
@@ -109,7 +111,7 @@ class AuthServiceTest {
 class ApiTest {
     private val clock = TestClock()
     private val store = InMemoryRecordStore()
-    private val api = Api(AuthService("correct horse battery", store, clock), SyncService(store, clock))
+    private val api = Api(AuthService(HASH, store, clock), SyncService(store, clock))
     private val json = Json { ignoreUnknownKeys = true }
 
     private fun token(): String {
@@ -147,5 +149,16 @@ class ApiTest {
         val auth = mapOf("Authorization" to "Bearer ${token()}")
         assertEquals(400, api.handle(Request("POST", "/api/sync", headers = auth, body = "{not json")).status)
         assertEquals(404, api.handle(Request("GET", "/api/nothing", headers = auth)).status)
+    }
+}
+
+class PasswordHashTest {
+    @Test fun `matches Python hashlib pbkdf2_hmac used by the deploy workflow`() {
+        // python3 -c "import hashlib;print(hashlib.pbkdf2_hmac('sha256',b'correct horse battery',b'lapel-login-v1',200000).hex())"
+        assertEquals(EXPECTED, PasswordHash.of("correct horse battery"))
+    }
+
+    private companion object {
+        const val EXPECTED = "9cd5b0d539fafb0e528864f9317348b7ce2d386ff5f2003ad27b6efce0b711c9"
     }
 }

@@ -9,12 +9,13 @@ import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
 /**
- * Single-owner login: the password comes from the deployment (GitHub secret → Lambda environment).
+ * Single-owner login. The deployment stores only [PasswordHash.of] the password (from the GitHub
+ * secret), never the password itself.
  * A successful login returns a signed token valid for [tokenLifetime]. The signing key is created
  * once at random and kept in the table, so it survives redeploys and never appears in code.
  */
 class AuthService(
-    private val password: String,
+    private val passwordHash: String,
     store: RecordStore,
     private val clock: Clock,
     private val tokenLifetime: Duration = Duration.ofDays(30),
@@ -25,8 +26,8 @@ class AuthService(
     }
 
     fun login(attempt: String): LoginResponse? {
-        if (password.length < MIN_PASSWORD) return null
-        val ok = MessageDigest.isEqual(attempt.toByteArray(), password.toByteArray())
+        if (passwordHash.length != 64) return null
+        val ok = MessageDigest.isEqual(PasswordHash.of(attempt).toByteArray(), passwordHash.lowercase().toByteArray())
         if (!ok) return null
         val expires = clock.millis() + tokenLifetime.toMillis()
         return LoginResponse(sign(expires.toString()), expires)
@@ -48,7 +49,6 @@ class AuthService(
     }
 
     companion object {
-        const val MIN_PASSWORD = 10
         private val B64E = Base64.getUrlEncoder().withoutPadding()
         private val B64D = Base64.getUrlDecoder()
     }

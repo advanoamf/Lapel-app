@@ -39,7 +39,7 @@ class Handler : RequestHandler<APIGatewayV2HTTPEvent, APIGatewayV2HTTPResponse> 
         val api: Api by lazy {
             val store = DynamoRecordStore(System.getenv("TABLE_NAME") ?: error("TABLE_NAME not set"))
             val clock = Clock.systemUTC()
-            Api(AuthService(System.getenv("LAPEL_PASSWORD").orEmpty(), store, clock), SyncService(store, clock))
+            Api(AuthService(System.getenv("LAPEL_PASSWORD_HASH").orEmpty(), store, clock), SyncService(store, clock))
         }
     }
 }

@@ -86,13 +86,19 @@ jobs:
         env:
           PW: ${{ secrets.LAPEL_PASSWORD }}
         run: |
+          # Only a PBKDF2 hash of the password goes to AWS (same algorithm as server PasswordHash).
+          HASH=$(python3 -c "import hashlib,os,sys
+          pw=os.environ['PW']
+          if len(pw) < 10: sys.exit('LAPEL_PASSWORD is shorter than 10 characters - choose a longer one in GitHub secrets')
+          print(hashlib.pbkdf2_hmac('sha256', pw.encode(), b'lapel-login-v1', 200000).hex())")
+          [ -n "$HASH" ] || exit 1
           sam deploy \
             --template-file server/template.yaml \
             --stack-name lapel-server \
             --s3-bucket "$BUCKET" --s3-prefix server \
             --capabilities CAPABILITY_IAM \
             --no-confirm-changeset --no-fail-on-empty-changeset \
-            --parameter-overrides "Password=$PW"
+            --parameter-overrides "PasswordHash=$HASH"
 
       - name: Server address
         if: steps.check.outputs.ready == 'true'

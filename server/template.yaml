@@ -3,11 +3,11 @@ Transform: AWS::Serverless-2016-10-31
 Description: Lapel server – one Lambda with a Function URL and one DynamoDB table (AWS always-free tier).
 
 Parameters:
-  Password:
+  PasswordHash:
     Type: String
     NoEcho: true
-    MinLength: 10
-    Description: Login password for the app and the web page (from the LAPEL_PASSWORD GitHub secret)
+    AllowedPattern: "^[0-9a-f]{64}$"
+    Description: PBKDF2 hash of the login password (computed by the deploy workflow from the LAPEL_PASSWORD secret)
 
 Resources:
   DataTable:
@@ -59,7 +59,7 @@ Resources:
       Environment:
         Variables:
           TABLE_NAME: !Ref DataTable
-          LAPEL_PASSWORD: !Ref Password
+          LAPEL_PASSWORD_HASH: !Ref PasswordHash
           JAVA_TOOL_OPTIONS: "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
       Policies:
         - DynamoDBCrudPolicy:
