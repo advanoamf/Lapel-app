@@ -168,4 +168,6 @@
     <string name="status_change_hint">For manual corrections, e.g. an imported order marked Delivered that is still in production.</string>
     <string name="status_draft_quote">Draft / quote</string>
     <string name="whatsapp_address_request">Hi %1$s, about your pin order (#%2$s) – could you please send the full shipping address (street, number, city, postcode and phone)? Thanks!</string>
+    <string name="field_customs">Customs (₪, if charged)</string>
+    <string name="app_version">Version %1$s</string>
 </resources>

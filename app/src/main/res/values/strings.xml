@@ -169,4 +169,6 @@
     <string name="status_change_hint">לתיקון ידני, למשל הזמנה שיובאה כ״נמסר״ אבל עדיין בייצור.</string>
     <string name="status_draft_quote">טיוטה / הצעת מחיר</string>
     <string name="whatsapp_address_request">היי %1$s, לגבי הזמנת הסיכות (מס׳ %2$s) – אפשר בבקשה כתובת מלאה למשלוח (רחוב, מספר, עיר, מיקוד וטלפון)? תודה!</string>
+    <string name="field_customs">מכס (₪, אם נדרש)</string>
+    <string name="app_version">גרסה %1$s</string>
 </resources>

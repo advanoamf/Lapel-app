@@ -174,4 +174,15 @@ class OrderRepositoryTest {
         assertEquals(true, summary.hasAddress)
         assertEquals(true, summary.addressSentToSupplier)
     }
+
+    @Test fun `customs from the order form replaces earlier customs`() = runTest {
+        val id = newOrder(newCustomer())
+        val order = db.orderDao().getOrder(id)!!
+        repo.updateOrder(order, emptyList(), customs = 12_000)
+        repo.updateOrder(order, emptyList(), customs = 15_000)
+        val customs = repo.observeCosts(id).first().filter { it.type == CostType.CUSTOMS }
+        assertEquals(listOf(15_000L), customs.map { it.amountAgorot })
+        repo.updateOrder(order, emptyList(), customs = 0)
+        assertEquals(0, repo.observeCosts(id).first().count { it.type == CostType.CUSTOMS })
+    }
 }

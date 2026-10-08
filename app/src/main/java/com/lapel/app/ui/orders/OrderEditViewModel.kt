@@ -62,6 +62,8 @@ data class OrderForm(
     val items: List<ItemForm> = listOf(ItemForm()),
     /** Only on a new order: the ₪ charged for the Alibaba order. Later costs are added on the order screen. */
     val alibabaPayment: String = "",
+    /** Optional – only some shipments are charged customs. */
+    val customs: String = "",
     val showErrors: Boolean = false,
 ) {
     val customerError get() = customerId == 0L
@@ -69,7 +71,8 @@ data class OrderForm(
     val depositError get() = depositPercent.toIntOrNull()?.let { it !in 0..100 } ?: true
     val itemsError get() = items.isEmpty() || items.any { !it.valid }
     val isValid get() = !customerError && !numberError && !depositError && !itemsError &&
-        (discount.isBlank() || parseShekels(discount) != null) && (alibabaPayment.isBlank() || parseShekels(alibabaPayment) != null)
+        (discount.isBlank() || parseShekels(discount) != null) && (alibabaPayment.isBlank() || parseShekels(alibabaPayment) != null) &&
+        (customs.isBlank() || (parseShekels(customs) ?: -1) >= 0)
 }
 
 @HiltViewModel
@@ -97,6 +100,7 @@ class OrderEditViewModel @Inject constructor(
                 val o = orders.observeOrder(route.id).first() ?: return@launch
                 original = o
                 val items = orders.observeItems(route.id).first()
+                val customs = orders.observeCosts(route.id).first().filter { it.type == CostType.CUSTOMS }.sumOf { it.amountAgorot }
                 form.value = OrderForm(
                     customerId = o.customerId,
                     orderNumber = o.orderNumber,
@@ -111,6 +115,7 @@ class OrderEditViewModel @Inject constructor(
                     supplierName = o.supplierName.orEmpty(),
                     notes = o.notes.orEmpty(),
                     shippingAddress = o.shippingAddress.orEmpty(),
+                    customs = if (customs == 0L) "" else agorotToInput(customs),
                     addressSentToSupplier = o.addressSentToSupplier,
                     initialStatus = o.fulfillmentStatus,
                     items = items.map {
@@ -170,12 +175,17 @@ class OrderEditViewModel @Inject constructor(
                 )
             }
             savedId.value = if (base == null) {
-                val costs = parseShekels(f.alibabaPayment)?.takeIf { it > 0 }?.let {
-                    listOf(OrderCostEntity(orderId = 0, type = CostType.ALIBABA_PAYMENT, amountAgorot = it, note = null))
-                }.orEmpty()
+                val costs = listOfNotNull(
+                    parseShekels(f.alibabaPayment)?.takeIf { it > 0 }?.let {
+                        OrderCostEntity(orderId = 0, type = CostType.ALIBABA_PAYMENT, amountAgorot = it, note = null)
+                    },
+                    parseShekels(f.customs)?.takeIf { it > 0 }?.let {
+                        OrderCostEntity(orderId = 0, type = CostType.CUSTOMS, amountAgorot = it, note = null)
+                    },
+                )
                 orders.createOrder(entity, items, costs)
             } else {
-                orders.updateOrder(entity, items)
+                orders.updateOrder(entity, items, customs = parseShekels(f.customs) ?: 0)
                 entity.id
             }
         }

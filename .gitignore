@@ -9,6 +9,8 @@ captures/
 .cxx/
 *.keystore
 *.jks
+# Fixed debug key so every build can update the installed app (debug only, not a release key)
+!app/debug.keystore
 # Business data must never be committed
 *.xlsx
 *.csv

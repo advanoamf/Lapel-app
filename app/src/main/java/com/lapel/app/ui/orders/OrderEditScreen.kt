@@ -124,6 +124,10 @@ fun OrderEditScreen(
                 TextInput(form.alibabaPayment, { v -> viewModel.edit { copy(alibabaPayment = v) } }, stringResource(R.string.field_alibaba_payment), keyboardType = KeyboardType.Decimal)
                 Text(stringResource(R.string.bank_fee_hint), style = MaterialTheme.typography.bodySmall)
             }
+            TextInput(
+                form.customs, { v -> viewModel.edit { copy(customs = v) } }, stringResource(R.string.field_customs),
+                keyboardType = KeyboardType.Decimal, isError = err && form.customs.isNotBlank() && com.lapel.app.ui.common.parseShekels(form.customs) == null,
+            )
             TextInput(form.discount, { v -> viewModel.edit { copy(discount = v) } }, stringResource(R.string.field_discount), keyboardType = KeyboardType.Decimal)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextInput(form.alibabaOrderNumber, { v -> viewModel.edit { copy(alibabaOrderNumber = v) } }, stringResource(R.string.field_alibaba_number), Modifier.weight(1f))

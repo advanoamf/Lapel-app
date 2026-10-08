@@ -9,6 +9,7 @@ import com.lapel.app.data.local.entity.OrderCostEntity
 import com.lapel.app.data.local.entity.OrderEntity
 import com.lapel.app.data.local.entity.OrderItemEntity
 import com.lapel.app.data.local.entity.StatusChangeEntity
+import com.lapel.domain.model.CostType
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -51,6 +52,9 @@ interface OrderDao {
 
     @Insert suspend fun insertCosts(costs: List<OrderCostEntity>)
     @Update suspend fun updateCost(cost: OrderCostEntity)
+
+    @Query("DELETE FROM order_costs WHERE orderId = :orderId AND type = :type")
+    suspend fun deleteCostsOfType(orderId: Long, type: CostType)
     @Delete suspend fun deleteCost(cost: OrderCostEntity)
 
     @Query("SELECT * FROM status_changes WHERE orderId = :orderId ORDER BY at")

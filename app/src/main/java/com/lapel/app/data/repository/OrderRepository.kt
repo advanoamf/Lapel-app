@@ -67,7 +67,7 @@ class OrderRepository @Inject constructor(
     }
 
     /** Saves edits to an order's details and replaces its designs. Costs and payments are edited separately. */
-    suspend fun updateOrder(order: OrderEntity, items: List<OrderItemEntity>) = db.withTransaction {
+    suspend fun updateOrder(order: OrderEntity, items: List<OrderItemEntity>, customs: Long? = null) = db.withTransaction {
         val existing = orders.getOrder(order.id) ?: return@withTransaction
         orders.updateOrder(
             order.copy(
@@ -80,6 +80,7 @@ class OrderRepository @Inject constructor(
         )
         orders.deleteItemsForOrder(order.id)
         orders.insertItems(items.map { it.copy(id = 0, orderId = order.id) })
+        if (customs != null) setCustoms(order.id, customs)
         reconcile(order.id)
     }
 
@@ -88,6 +89,14 @@ class OrderRepository @Inject constructor(
     }
 
     suspend fun deleteCost(cost: OrderCostEntity) = orders.deleteCost(cost)
+
+    /** Replaces the order's customs lines with one line of [agorot] (none when 0). */
+    private suspend fun setCustoms(orderId: Long, agorot: Long) {
+        orders.deleteCostsOfType(orderId, CostType.CUSTOMS)
+        if (agorot > 0) {
+            orders.insertCosts(listOf(OrderCostEntity(orderId = orderId, type = CostType.CUSTOMS, amountAgorot = agorot, note = null)))
+        }
+    }
 
     /** Manual status change from the order screen (e.g. "Ordered from Alibaba", "Delivered" for pickup). */
     suspend fun setStatus(orderId: Long, status: FulfillmentStatus) = db.withTransaction {

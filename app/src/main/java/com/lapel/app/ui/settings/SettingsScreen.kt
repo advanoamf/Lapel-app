@@ -92,6 +92,13 @@ fun SettingsScreen(viewModel: ImportViewModel = hiltViewModel()) {
                 }
             }
         }
+        item {
+            Text(
+                stringResource(R.string.app_version, com.lapel.app.BuildConfig.VERSION_NAME),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         val preview = state as? ImportState.Preview
         if (preview != null) {
             if (preview.data.outstandingOrders.isNotEmpty()) {
