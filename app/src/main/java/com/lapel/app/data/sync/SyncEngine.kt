@@ -78,10 +78,10 @@ class SyncEngine @Inject constructor(
             applying {
                 records.filter { "${it.type}/${it.id}" in done }.forEach { r ->
                     if (r.deleted) {
-                        sql.execSQL("DELETE FROM sync_tombstones WHERE type = ? AND uid = ? AND deletedAt <= ?", arrayOf(r.type, r.id, r.updatedAt))
+                        sql.execSQL("DELETE FROM sync_tombstones WHERE type = ? AND uid = ? AND deletedAt <= ?", arrayOf<Any?>(r.type, r.id, r.updatedAt))
                     } else {
                         val t = SyncTables.byType.getValue(r.type)
-                        sql.execSQL("UPDATE ${t.name} SET dirty = 0 WHERE uid = ? AND syncUpdatedAt = ?", arrayOf(r.id, r.updatedAt))
+                        sql.execSQL("UPDATE ${t.name} SET dirty = 0 WHERE uid = ? AND syncUpdatedAt = ?", arrayOf<Any?>(r.id, r.updatedAt))
                     }
                 }
             }
@@ -149,7 +149,7 @@ class SyncEngine @Inject constructor(
                     byType[t.type].orEmpty().filter { it.deleted }.forEach { r -> if (delete(t, r)) applied++ }
                 }
                 // If something waited for a parent we have not received, fetch the same range again next time.
-                if (!waitingForParent) sql.execSQL("UPDATE sync_state SET cursor = ? WHERE id = 1", arrayOf(result.cursor))
+                if (!waitingForParent) sql.execSQL("UPDATE sync_state SET cursor = ? WHERE id = 1", arrayOf<Any?>(result.cursor))
             }
         }
         return applied
@@ -160,14 +160,14 @@ class SyncEngine @Inject constructor(
     private data class LocalRow(val id: Long, val dirty: Boolean, val updatedAt: Long)
 
     private fun local(t: SyncTable, uid: String): LocalRow? =
-        sql.query("SELECT id, dirty, syncUpdatedAt FROM ${t.name} WHERE uid = ?", arrayOf(uid)).use { c ->
+        sql.query("SELECT id, dirty, syncUpdatedAt FROM ${t.name} WHERE uid = ?", arrayOf<Any?>(uid)).use { c ->
             if (c.moveToFirst()) LocalRow(c.getLong(0), c.getInt(1) == 1, c.getLong(2)) else null
         }
 
     private fun upsert(t: SyncTable, r: RemoteRecord): Outcome {
         val existing = local(t, r.id)
         if (existing != null && existing.updatedAt >= r.updatedAt) return Outcome.SKIPPED // same or newer here
-        val deletedHere = count("SELECT COUNT(*) FROM sync_tombstones WHERE type = ? AND uid = ? AND deletedAt >= ?", arrayOf(r.type, r.id, r.updatedAt)) > 0
+        val deletedHere = count("SELECT COUNT(*) FROM sync_tombstones WHERE type = ? AND uid = ? AND deletedAt >= ?", arrayOf<Any?>(r.type, r.id, r.updatedAt)) > 0
         if (deletedHere) return Outcome.SKIPPED
 
         val columns = columns(t.name)
@@ -178,7 +178,7 @@ class SyncEngine @Inject constructor(
             if (target != null) {
                 val refUid = (value as? JsonPrimitive)?.takeIf { it.isString }?.content
                 if (refUid == null) { values.putNull(key); continue }
-                val localId = sql.query("SELECT id FROM $target WHERE uid = ?", arrayOf(refUid)).use { c -> if (c.moveToFirst()) c.getLong(0) else null }
+                val localId = sql.query("SELECT id FROM $target WHERE uid = ?", arrayOf<Any?>(refUid)).use { c -> if (c.moveToFirst()) c.getLong(0) else null }
                 when {
                     localId != null -> values.put(key, localId)
                     key in t.softRefs -> values.putNull(key)
@@ -193,7 +193,7 @@ class SyncEngine @Inject constructor(
         values.put("dirty", 0)
         return try {
             if (existing != null) {
-                sql.update(t.name, SQLiteDatabase.CONFLICT_ABORT, values, "id = ?", arrayOf(existing.id))
+                sql.update(t.name, SQLiteDatabase.CONFLICT_ABORT, values, "id = ?", arrayOf<Any?>(existing.id))
             } else {
                 sql.insert(t.name, SQLiteDatabase.CONFLICT_ABORT, values)
             }
@@ -207,7 +207,7 @@ class SyncEngine @Inject constructor(
         val existing = local(t, r.id) ?: return false
         if (existing.dirty && existing.updatedAt > r.updatedAt) return false // edited here after the delete
         return try {
-            sql.delete(t.name, "id = ?", arrayOf(existing.id)) > 0
+            sql.delete(t.name, "id = ?", arrayOf<Any?>(existing.id)) > 0
         } catch (_: SQLiteConstraintException) {
             false // still referenced, e.g. a customer with orders
         }

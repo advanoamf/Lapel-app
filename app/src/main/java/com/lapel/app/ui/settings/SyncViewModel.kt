@@ -1,6 +1,5 @@
 package com.lapel.app.ui.settings
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lapel.app.data.sync.SyncApi
@@ -9,7 +8,6 @@ import com.lapel.app.data.sync.SyncSettings
 import com.lapel.app.data.sync.SyncStatus
 import com.lapel.app.data.sync.WrongPasswordException
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -29,7 +27,6 @@ sealed interface SyncMessage {
 
 @HiltViewModel
 class SyncViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val api: SyncApi,
     private val engine: SyncEngine,
     private val settings: SyncSettings,
