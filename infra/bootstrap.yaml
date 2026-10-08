@@ -13,6 +13,14 @@ Parameters:
   GitHubRepo:
     Type: String
     Default: Lapel-app
+  GitHubOwnerId:
+    Type: String
+    Default: "63931693"
+    Description: Numeric id of the GitHub account (GitHub's newer token format includes it)
+  GitHubRepoId:
+    Type: String
+    Default: "1408805054"
+    Description: Numeric id of the GitHub repository
   CreateGitHubOidcProvider:
     Type: String
     AllowedValues: ["true", "false"]
@@ -48,7 +56,10 @@ Resources:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
               StringLike:
-                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOwner}/${GitHubRepo}:*
+                # GitHub sends either the classic or the newer id-qualified subject.
+                token.actions.githubusercontent.com:sub:
+                  - !Sub repo:${GitHubOwner}/${GitHubRepo}:*
+                  - !Sub repo:${GitHubOwner}@${GitHubOwnerId}/${GitHubRepo}@${GitHubRepoId}:*
       Policies:
         - PolicyName: lapel-deploy
           PolicyDocument:

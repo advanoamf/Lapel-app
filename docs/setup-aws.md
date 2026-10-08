@@ -23,6 +23,13 @@
 
 > אם יצא שגיאה על `token.actions.githubusercontent.com` שכבר קיים — מחק את ה-stack, וחזור על שלב 2 עם **CreateGitHubOidcProvider = false**.
 
+### עדכון קובץ ההקמה (אם כבר הרצת גרסה קודמת)
+1. הורד שוב את `infra/bootstrap.yaml` מגיטהאב.
+2. ב-CloudFormation בחר את **lapel-bootstrap** → **Update** (בגרסאות חדשות: **Update stack** → **Make a direct update**).
+3. **Replace existing template** → **Upload a template file** → בחר את הקובץ החדש → **Next**.
+4. בדף הפרמטרים אל תשנה כלום → **Next** → **Next** → סמן ✔ את התיבה בתחתית → **Submit**.
+5. חכה ל-**UPDATE_COMPLETE**.
+
 ## שלב 3 — להכניס שני ערכים בגיטהאב
 1. ב-GitHub, בריפו **Lapel-app** → **Settings** → בתפריט משמאל **Secrets and variables** → **Actions**.
 2. **New repository secret**:
