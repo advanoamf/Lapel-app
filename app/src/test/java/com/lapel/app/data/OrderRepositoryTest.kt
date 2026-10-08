@@ -150,4 +150,28 @@ class OrderRepositoryTest {
         newOrder(customer, "102-148")
         assertEquals("154", repo.nextOrderNumber())
     }
+
+    @Test fun `moving an imported delivered order back to ordered clears the delivery date`() = runTest {
+        val id = newOrder(newCustomer())
+        repo.setStatus(id, FulfillmentStatus.DELIVERED)
+        assertNotNull(db.orderDao().getOrder(id)!!.deliveredAt)
+        repo.setStatus(id, FulfillmentStatus.ORDERED_FROM_ALIBABA)
+        val order = db.orderDao().getOrder(id)!!
+        assertEquals(FulfillmentStatus.ORDERED_FROM_ALIBABA, order.fulfillmentStatus)
+        assertEquals(null, order.deliveredAt)
+        assertNotNull(order.alibabaOrderedOn)
+    }
+
+    @Test fun `shipping address and sent-to-manufacturer flag reach the summary`() = runTest {
+        val id = newOrder(newCustomer())
+        assertEquals(false, db.orderDao().getSummary(id)!!.hasAddress)
+        val order = db.orderDao().getOrder(id)!!
+        repo.updateOrder(order.copy(shippingAddress = "  "), emptyList())
+        assertEquals(false, db.orderDao().getSummary(id)!!.hasAddress) // blank does not count
+        repo.updateOrder(order.copy(shippingAddress = "Herzl 1, Tel Aviv"), emptyList())
+        repo.setAddressSent(id, true)
+        val summary = db.orderDao().getSummary(id)!!
+        assertEquals(true, summary.hasAddress)
+        assertEquals(true, summary.addressSentToSupplier)
+    }
 }

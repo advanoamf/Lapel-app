@@ -19,6 +19,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,6 +29,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -53,6 +55,7 @@ import com.lapel.app.ui.common.label
 import com.lapel.app.ui.common.openWhatsApp
 import com.lapel.domain.finance.OrderFinancials
 import com.lapel.domain.model.ChangeSource
+import com.lapel.domain.model.DeliveryMethod
 import com.lapel.domain.model.FulfillmentStatus
 import com.lapel.domain.model.Money
 import java.time.ZoneId
@@ -76,6 +79,7 @@ fun OrderDetailScreen(
     var paymentDialog by remember { mutableStateOf(false) }
     var costDialog by remember { mutableStateOf(false) }
     var confirmCancel by remember { mutableStateOf(false) }
+    var statusDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -86,6 +90,10 @@ fun OrderDetailScreen(
                     IconButton(onClick = { onEdit(viewModel.id) }) { Icon(Icons.Outlined.Edit, stringResource(R.string.action_edit)) }
                     IconButton(onClick = { menu = true }) { Icon(Icons.Outlined.MoreVert, null) }
                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.status_change)) },
+                            onClick = { menu = false; statusDialog = true },
+                        )
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.order_cancel)) },
                             enabled = order?.fulfillmentStatus != FulfillmentStatus.CANCELLED,
@@ -126,6 +134,24 @@ fun OrderDetailScreen(
                     Button(onClick = viewModel::advance, modifier = Modifier.fillMaxWidth()) {
                         Text(stringResource(R.string.mark_as, stringResource(next.label())))
                     }
+                }
+            }
+            if (order.deliveryMethod == DeliveryMethod.FEDEX) {
+                item {
+                    AddressCard(
+                        address = order.shippingAddress,
+                        sent = order.addressSentToSupplier,
+                        onSentChange = viewModel::setAddressSent,
+                        onAsk = state.customer?.phone?.let { phone ->
+                            val msg = context.getString(R.string.whatsapp_address_request, state.customer?.name.orEmpty(), order.orderNumber)
+                            ({ context.openWhatsApp(phone, msg) })
+                        },
+                        onCopy = { text ->
+                            val cm = context.getSystemService(android.content.ClipboardManager::class.java)
+                            cm?.setPrimaryClip(android.content.ClipData.newPlainText("address", text))
+                        },
+                        onEdit = { onEdit(viewModel.id) },
+                    )
                 }
             }
             item {
@@ -219,6 +245,27 @@ fun OrderDetailScreen(
             onSave = { type, amount, note -> viewModel.addCost(type, amount, note); costDialog = false },
         )
     }
+    if (statusDialog) {
+        AlertDialog(
+            onDismissRequest = { statusDialog = false },
+            title = { Text(stringResource(R.string.status_change)) },
+            text = {
+                Column {
+                    FulfillmentStatus.entries.forEach { s ->
+                        Row(
+                            Modifier.fillMaxWidth().clickable { viewModel.setStatus(s); statusDialog = false }.padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(selected = order?.fulfillmentStatus == s, onClick = { viewModel.setStatus(s); statusDialog = false })
+                            Text(stringResource(s.label()))
+                        }
+                    }
+                    Text(stringResource(R.string.status_change_hint), style = MaterialTheme.typography.bodySmall)
+                }
+            },
+            confirmButton = { TextButton(onClick = { statusDialog = false }) { Text(stringResource(R.string.action_close)) } },
+        )
+    }
     if (confirmCancel) {
         AlertDialog(
             onDismissRequest = { confirmCancel = false },
@@ -226,6 +273,36 @@ fun OrderDetailScreen(
             confirmButton = { TextButton(onClick = { viewModel.cancel(); confirmCancel = false }) { Text(stringResource(R.string.order_cancel)) } },
             dismissButton = { TextButton(onClick = { confirmCancel = false }) { Text(stringResource(R.string.action_back)) } },
         )
+    }
+}
+
+@Composable
+private fun AddressCard(
+    address: String?,
+    sent: Boolean,
+    onSentChange: (Boolean) -> Unit,
+    onAsk: (() -> Unit)?,
+    onCopy: (String) -> Unit,
+    onEdit: () -> Unit,
+) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(stringResource(R.string.field_shipping_address), style = MaterialTheme.typography.titleSmall)
+            if (address.isNullOrBlank()) {
+                Text(stringResource(R.string.address_missing), color = MaterialTheme.colorScheme.error)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    onAsk?.let { OutlinedButton(onClick = it) { Text(stringResource(R.string.address_ask_whatsapp)) } }
+                    TextButton(onClick = onEdit) { Text(stringResource(R.string.address_add)) }
+                }
+            } else {
+                Text(address)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = sent, onCheckedChange = onSentChange)
+                    Text(stringResource(R.string.field_address_sent), modifier = Modifier.weight(1f))
+                    TextButton(onClick = { onCopy(address) }) { Text(stringResource(R.string.action_copy)) }
+                }
+            }
+        }
     }
 }
 

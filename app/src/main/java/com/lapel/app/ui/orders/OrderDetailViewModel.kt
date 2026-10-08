@@ -103,6 +103,11 @@ class OrderDetailViewModel @Inject constructor(
 
     fun cancel() = viewModelScope.launch { repository.setStatus(id, FulfillmentStatus.CANCELLED) }
 
+    /** Manual correction to any status (e.g. an imported order that is really still in production). */
+    fun setStatus(status: FulfillmentStatus) = viewModelScope.launch { repository.setStatus(id, status) }
+
+    fun setAddressSent(sent: Boolean) = viewModelScope.launch { repository.setAddressSent(id, sent) }
+
     fun recordPayment(amount: Money, method: PaymentMethod, milestone: PaymentMilestone, date: LocalDate, reference: String?) {
         if (!amount.isPositive) return
         viewModelScope.launch {

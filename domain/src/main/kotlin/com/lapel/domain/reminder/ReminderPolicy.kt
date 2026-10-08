@@ -1,5 +1,6 @@
 package com.lapel.domain.reminder
 
+import com.lapel.domain.model.DeliveryMethod
 import com.lapel.domain.model.FulfillmentStatus
 import com.lapel.domain.model.Money
 import com.lapel.domain.model.ReminderType
@@ -14,6 +15,8 @@ data class ReminderSettings(
     /** A balance becomes overdue this many days after delivery (or after the customer's terms, if longer). */
     val overdueGraceDays: Int = 3,
     val staleDraftDays: Int = 7,
+    /** Ask for the shipping address this many days after the order date (a week and a half). */
+    val addressAfterDays: Int = 10,
     val zone: ZoneId = ZoneId.of("Asia/Jerusalem"),
 )
 
@@ -28,7 +31,13 @@ data class OrderReminderSnapshot(
     val deliveredAt: Instant?,
     /** 0 = pay on delivery; 60 = "שוטף+60". */
     val paymentTermsDays: Int,
+    val orderDate: LocalDate? = null,
+    val deliveryMethod: DeliveryMethod = DeliveryMethod.FEDEX,
+    val hasAddress: Boolean = true,
+    val addressSentToSupplier: Boolean = true,
 )
+
+enum class AddressStatus { NOT_NEEDED, MISSING, NOT_SENT, DONE }
 
 data class ReminderLogEntry(
     val orderId: Long,
@@ -51,7 +60,37 @@ class ReminderPolicy(private val settings: ReminderSettings = ReminderSettings()
         now: Instant,
     ): List<Reminder> {
         val byOrder = log.groupBy { it.orderId }
-        return orders.mapNotNull { order -> reminderFor(order, byOrder[order.orderId].orEmpty(), now) }
+        return orders.flatMap { order ->
+            val orderLog = byOrder[order.orderId].orEmpty()
+            listOfNotNull(reminderFor(order, orderLog, now), addressReminder(order, orderLog, now))
+        }
+    }
+
+    /**
+     * Shipping address progress for an order the supplier ships by FedEx. Only orders already
+     * placed with Alibaba and not yet shipped need it.
+     */
+    fun addressStatus(order: OrderReminderSnapshot): AddressStatus = when {
+        order.deliveryMethod != DeliveryMethod.FEDEX -> AddressStatus.NOT_NEEDED
+        order.status != FulfillmentStatus.ORDERED_FROM_ALIBABA -> AddressStatus.NOT_NEEDED
+        !order.hasAddress -> AddressStatus.MISSING
+        !order.addressSentToSupplier -> AddressStatus.NOT_SENT
+        else -> AddressStatus.DONE
+    }
+
+    private fun addressReminder(order: OrderReminderSnapshot, log: List<ReminderLogEntry>, now: Instant): Reminder? {
+        if (log.any { it.snoozedUntil?.isAfter(now) == true }) return null
+        val type = when (addressStatus(order)) {
+            AddressStatus.MISSING -> ReminderType.ADDRESS_MISSING
+            AddressStatus.NOT_SENT -> ReminderType.ADDRESS_NOT_SENT
+            else -> return null
+        }
+        val today = today(now)
+        val orderDate = order.orderDate ?: return null
+        if (daysBetween(orderDate, today) < settings.addressAfterDays) return null
+        val last = log.filter { it.type == type }.maxByOrNull { it.sentAt }
+        if (last != null && daysBetween(today(last.sentAt), today) < settings.repeatDays) return null
+        return Reminder(order.orderId, type, Money.ZERO)
     }
 
     /** True when money that should already have been paid is late (dashboard "Overdue" card). */

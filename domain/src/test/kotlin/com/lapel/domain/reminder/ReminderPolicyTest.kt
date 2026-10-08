@@ -97,3 +97,57 @@ class ReminderPolicyTest {
         assertTrue(due(draft, log, at(20)).isEmpty())
     }
 }
+
+class AddressReminderTest {
+    private val zone = ZoneId.of("Asia/Jerusalem")
+    private val policy = ReminderPolicy()
+    private fun at(day: Int): Instant = LocalDateTime.of(2026, 3, day, 10, 0).atZone(zone).toInstant()
+
+    private val ordered = OrderReminderSnapshot(
+        orderId = 170,
+        status = FulfillmentStatus.ORDERED_FROM_ALIBABA,
+        depositOutstanding = Money.ZERO,
+        outstanding = Money.shekels(300),
+        createdAt = at(1),
+        orderedFromAlibabaOn = LocalDate.of(2026, 3, 1),
+        deliveredAt = null,
+        paymentTermsDays = 0,
+        orderDate = LocalDate.of(2026, 3, 1),
+        hasAddress = false,
+        addressSentToSupplier = false,
+    )
+
+    private fun types(order: OrderReminderSnapshot, log: List<ReminderLogEntry>, now: Instant) =
+        policy.remindersDue(listOf(order), log, now).map { it.type }
+
+    @Test fun `asks for the address a week and a half after the order`() {
+        assertTrue(ReminderType.ADDRESS_MISSING !in types(ordered, emptyList(), at(10)))
+        assertEquals(listOf(ReminderType.ADDRESS_MISSING), types(ordered, emptyList(), at(11)))
+    }
+
+    @Test fun `repeats every three days until filled`() {
+        val log = listOf(ReminderLogEntry(170, ReminderType.ADDRESS_MISSING, at(11)))
+        assertTrue(types(ordered, log, at(13)).isEmpty())
+        assertEquals(listOf(ReminderType.ADDRESS_MISSING), types(ordered, log, at(14)))
+    }
+
+    @Test fun `then reminds to pass it to the manufacturer`() {
+        val withAddress = ordered.copy(hasAddress = true)
+        assertEquals(AddressStatus.NOT_SENT, policy.addressStatus(withAddress))
+        assertEquals(listOf(ReminderType.ADDRESS_NOT_SENT), types(withAddress, emptyList(), at(12)))
+        val done = withAddress.copy(addressSentToSupplier = true)
+        assertEquals(AddressStatus.DONE, policy.addressStatus(done))
+        assertTrue(types(done, emptyList(), at(20)).isEmpty())
+    }
+
+    @Test fun `not needed for pickup, drafts or orders already shipped`() {
+        assertEquals(AddressStatus.NOT_NEEDED, policy.addressStatus(ordered.copy(deliveryMethod = com.lapel.domain.model.DeliveryMethod.SELF_PICKUP)))
+        assertEquals(AddressStatus.NOT_NEEDED, policy.addressStatus(ordered.copy(status = FulfillmentStatus.SHIPPED)))
+        assertEquals(AddressStatus.NOT_NEEDED, policy.addressStatus(ordered.copy(status = FulfillmentStatus.DRAFT)))
+    }
+
+    @Test fun `address and deposit reminders can come together`() {
+        val both = ordered.copy(depositOutstanding = Money.shekels(150))
+        assertEquals(setOf(ReminderType.DEPOSIT_DUE, ReminderType.ADDRESS_MISSING), types(both, emptyList(), at(11)).toSet())
+    }
+}

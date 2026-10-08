@@ -5,6 +5,7 @@ import com.lapel.domain.finance.OrderTotals
 import com.lapel.domain.model.DeliveryMethod
 import com.lapel.domain.model.FulfillmentStatus
 import com.lapel.domain.model.Money
+import com.lapel.domain.reminder.OrderReminderSnapshot
 import java.time.Instant
 import java.time.LocalDate
 
@@ -20,6 +21,8 @@ data class OrderSummaryRow(
     val alibabaOrderedOn: LocalDate?,
     val deliveredAt: Instant?,
     val createdAt: Instant,
+    val hasAddress: Boolean,
+    val addressSentToSupplier: Boolean,
     val customerId: Long,
     val customerName: String,
     val customerOrganization: String?,
@@ -42,5 +45,20 @@ data class OrderSummaryRow(
             depositPercent = depositPercent,
             status = fulfillmentStatus,
         ),
+    )
+
+    fun reminderSnapshot(f: OrderFinancials = financials()) = OrderReminderSnapshot(
+        orderId = orderId,
+        status = fulfillmentStatus,
+        depositOutstanding = f.depositOutstanding,
+        outstanding = f.outstanding,
+        createdAt = createdAt,
+        orderedFromAlibabaOn = alibabaOrderedOn,
+        deliveredAt = deliveredAt,
+        paymentTermsDays = paymentTermsDays,
+        orderDate = orderDate,
+        deliveryMethod = deliveryMethod,
+        hasAddress = hasAddress,
+        addressSentToSupplier = addressSentToSupplier,
     )
 }

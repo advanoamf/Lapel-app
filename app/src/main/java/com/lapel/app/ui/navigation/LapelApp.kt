@@ -15,6 +15,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -50,8 +51,15 @@ private enum class TopLevelDestination(
 }
 
 @Composable
-fun LapelApp() {
+fun LapelApp(openOrderId: Long? = null, onOrderOpened: () -> Unit = {}) {
     val navController = rememberNavController()
+    LaunchedEffect(openOrderId) {
+        openOrderId?.let {
+            navController.navigate(OrderDetailRoute(it))
+            onOrderOpened()
+        }
+    }
+    NotificationPermissionRequest()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
 
@@ -132,5 +140,20 @@ fun LapelApp() {
             }
             composable<SettingsRoute> { SettingsScreen() }
         }
+    }
+}
+
+/** Asks once for permission to show reminders (Android 13+). */
+@Composable
+private fun NotificationPermissionRequest() {
+    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) return
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
+    ) { }
+    LaunchedEffect(Unit) {
+        val granted = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) ==
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (!granted) launcher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
     }
 }

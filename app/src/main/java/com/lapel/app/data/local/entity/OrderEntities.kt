@@ -1,5 +1,6 @@
 package com.lapel.app.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -48,6 +49,10 @@ data class OrderEntity(
     val notes: String?,
     val createdAt: Instant,
     val updatedAt: Instant,
+    /** Where FedEx delivers; usually received from the customer about a week and a half after ordering. */
+    val shippingAddress: String? = null,
+    /** The address was passed on to the manufacturer. */
+    @ColumnInfo(defaultValue = "0") val addressSentToSupplier: Boolean = false,
 )
 
 @Entity(

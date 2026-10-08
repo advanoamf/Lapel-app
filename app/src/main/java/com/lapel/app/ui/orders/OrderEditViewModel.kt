@@ -55,6 +55,10 @@ data class OrderForm(
     val alibabaOrderedOn: LocalDate? = null,
     val supplierName: String = "",
     val notes: String = "",
+    val shippingAddress: String = "",
+    val addressSentToSupplier: Boolean = false,
+    /** Only for a new order: start as a draft (quote) or as already ordered from Alibaba. */
+    val initialStatus: FulfillmentStatus = FulfillmentStatus.ORDERED_FROM_ALIBABA,
     val items: List<ItemForm> = listOf(ItemForm()),
     /** Only on a new order: the ₪ charged for the Alibaba order. Later costs are added on the order screen. */
     val alibabaPayment: String = "",
@@ -106,6 +110,9 @@ class OrderEditViewModel @Inject constructor(
                     alibabaOrderedOn = o.alibabaOrderedOn,
                     supplierName = o.supplierName.orEmpty(),
                     notes = o.notes.orEmpty(),
+                    shippingAddress = o.shippingAddress.orEmpty(),
+                    addressSentToSupplier = o.addressSentToSupplier,
+                    initialStatus = o.fulfillmentStatus,
                     items = items.map {
                         ItemForm(it.id, it.designName, it.quantityOrdered.toString(), it.quantitySold.toString(), agorotToInput(it.unitPriceAgorot), it.pinType)
                     }.ifEmpty { listOf(ItemForm()) },
@@ -137,17 +144,20 @@ class OrderEditViewModel @Inject constructor(
                 title = title,
                 orderDate = f.orderDate,
                 dueDate = f.dueDate,
-                fulfillmentStatus = base?.fulfillmentStatus ?: FulfillmentStatus.DRAFT,
+                fulfillmentStatus = base?.fulfillmentStatus ?: f.initialStatus,
                 depositPercent = f.depositPercent.toInt(),
                 discountAgorot = parseShekels(f.discount) ?: 0,
                 deliveryMethod = f.deliveryMethod,
                 alibabaOrderNumber = f.alibabaOrderNumber.trim().ifEmpty { null },
-                alibabaOrderedOn = f.alibabaOrderedOn,
+                alibabaOrderedOn = f.alibabaOrderedOn
+                    ?: f.orderDate.takeIf { base == null && f.initialStatus != FulfillmentStatus.DRAFT },
                 supplierName = f.supplierName.trim().ifEmpty { null },
                 qualityOk = base?.qualityOk,
                 deliveredAt = base?.deliveredAt,
                 completedAt = base?.completedAt,
                 notes = f.notes.trim().ifEmpty { null },
+                shippingAddress = f.shippingAddress.trim().ifEmpty { null },
+                addressSentToSupplier = f.addressSentToSupplier && f.shippingAddress.isNotBlank(),
                 createdAt = base?.createdAt ?: now,
                 updatedAt = now,
             )

@@ -39,7 +39,7 @@ import com.lapel.app.data.local.entity.TrackingEventEntity
         StockBatchCostEntity::class,
         StockSaleEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)

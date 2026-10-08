@@ -127,12 +127,31 @@ class OrderRepository @Inject constructor(
         orders.updateOrder(updated)
     }
 
-    private fun OrderEntity.withStatus(status: FulfillmentStatus, now: Instant) = copy(
-        fulfillmentStatus = status,
-        deliveredAt = if (status == FulfillmentStatus.DELIVERED && deliveredAt == null) now else deliveredAt,
-        completedAt = if (status == FulfillmentStatus.COMPLETED) now else completedAt,
-        updatedAt = now,
-    )
+    /** Marks whether the shipping address was passed to the manufacturer. */
+    suspend fun setAddressSent(orderId: Long, sent: Boolean) {
+        val order = orders.getOrder(orderId) ?: return
+        orders.updateOrder(order.copy(addressSentToSupplier = sent, updatedAt = clock.instant()))
+    }
+
+    private fun OrderEntity.withStatus(status: FulfillmentStatus, now: Instant): OrderEntity {
+        // Moving back (a manual correction) clears dates that no longer apply.
+        val delivered = status == FulfillmentStatus.DELIVERED || status == FulfillmentStatus.COMPLETED
+        return copy(
+            fulfillmentStatus = status,
+            deliveredAt = when {
+                !delivered -> null
+                deliveredAt == null -> now
+                else -> deliveredAt
+            },
+            completedAt = if (status == FulfillmentStatus.COMPLETED) completedAt ?: now else null,
+            alibabaOrderedOn = if (status != FulfillmentStatus.DRAFT && status != FulfillmentStatus.CANCELLED && alibabaOrderedOn == null) {
+                now.atZone(clock.zone).toLocalDate()
+            } else {
+                alibabaOrderedOn
+            },
+            updatedAt = now,
+        )
+    }
 
     companion object {
         val DEFAULT_BANK_FEE = Money.shekels(8)

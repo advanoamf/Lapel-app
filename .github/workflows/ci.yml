@@ -24,6 +24,9 @@ jobs:
       - name: App unit tests, lint and debug build
         run: ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --console=plain --stacktrace
 
+      - name: Print Room schema
+        run: for f in app/schemas/*/*.json; do echo "=== $f"; cat "$f"; echo; done
+
       - name: Upload debug APK
         if: success()
         uses: actions/upload-artifact@v4

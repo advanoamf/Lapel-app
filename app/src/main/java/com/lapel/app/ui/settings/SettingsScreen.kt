@@ -21,6 +21,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -74,6 +75,20 @@ fun SettingsScreen(viewModel: ImportViewModel = hiltViewModel()) {
                             OutlinedButton(onClick = viewModel::reset) { Text(stringResource(R.string.action_close)) }
                         }
                     }
+                }
+            }
+        }
+        item {
+            val context = androidx.compose.ui.platform.LocalContext.current
+            var ran by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.reminders_title), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.reminders_description), style = MaterialTheme.typography.bodyMedium)
+                    OutlinedButton(onClick = { com.lapel.app.work.ReminderScheduler.runNow(context); ran = true }) {
+                        Text(stringResource(R.string.reminders_run_now))
+                    }
+                    if (ran) Text(stringResource(R.string.reminders_run_now_done), style = MaterialTheme.typography.bodySmall)
                 }
             }
         }

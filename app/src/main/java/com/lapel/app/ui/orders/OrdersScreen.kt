@@ -35,6 +35,7 @@ import com.lapel.app.R
 private fun OrderFilter.label(): Int = when (this) {
     OrderFilter.ALL -> R.string.filter_all
     OrderFilter.UNPAID -> R.string.filter_unpaid
+    OrderFilter.ADDRESS -> R.string.filter_address
     OrderFilter.IN_TRANSIT -> R.string.filter_in_transit
     OrderFilter.DELIVERED_UNPAID -> R.string.filter_delivered_unpaid
     OrderFilter.OVERDUE -> R.string.filter_overdue
@@ -84,7 +85,7 @@ fun OrdersScreen(
                 item { Text(stringResource(R.string.orders_empty), color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }
             items(items, key = { it.row.orderId }) { item ->
-                OrderCard(item.row, item.financials, item.overdue, Modifier.clickable { onOpen(item.row.orderId) })
+                OrderCard(item.row, item.financials, item.overdue, Modifier.clickable { onOpen(item.row.orderId) }, item.address)
             }
         }
     }

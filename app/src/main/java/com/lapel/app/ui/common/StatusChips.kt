@@ -82,5 +82,8 @@ fun PaymentChip(status: PaymentStatus, modifier: Modifier = Modifier) =
     Chip(stringResource(status.label()), paymentColors(status), modifier)
 
 @Composable
+fun AlertChip(text: String, modifier: Modifier = Modifier) = Chip(text, palette(0xFF8A5A00, 0xFFFFB955), modifier)
+
+@Composable
 fun OverdueChip(modifier: Modifier = Modifier) =
     Chip(stringResource(R.string.overdue), palette(0xFFC62828, 0xFFFFB4AB), modifier)

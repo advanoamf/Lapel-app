@@ -36,4 +36,16 @@ enum class ShipmentStatus { PENDING, LABEL_CREATED, IN_TRANSIT, OUT_FOR_DELIVERY
 
 enum class ChangeSource { MANUAL, FEDEX_SYNC, SYSTEM }
 
-enum class ReminderType { DEPOSIT_DUE, BALANCE_DUE, BALANCE_OVERDUE, STALE_DRAFT, SHIPPED, DELIVERED, SYNC_FAILED }
+enum class ReminderType {
+    DEPOSIT_DUE,
+    BALANCE_DUE,
+    BALANCE_OVERDUE,
+    STALE_DRAFT,
+    /** No shipping address yet – ask the customer. */
+    ADDRESS_MISSING,
+    /** Address known but not yet passed to the manufacturer. */
+    ADDRESS_NOT_SENT,
+    SHIPPED,
+    DELIVERED,
+    SYNC_FAILED,
+}

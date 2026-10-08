@@ -6,7 +6,7 @@ import com.lapel.app.data.local.dao.OrderSummaryRow
 import com.lapel.app.data.repository.OrderRepository
 import com.lapel.domain.finance.OrderFinancials
 import com.lapel.domain.model.FulfillmentStatus
-import com.lapel.domain.reminder.OrderReminderSnapshot
+import com.lapel.domain.reminder.AddressStatus
 import com.lapel.domain.reminder.ReminderPolicy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,19 +17,13 @@ import kotlinx.coroutines.flow.stateIn
 import java.time.Clock
 import javax.inject.Inject
 
-enum class OrderFilter { ALL, UNPAID, IN_TRANSIT, DELIVERED_UNPAID, OVERDUE, COMPLETED, DRAFTS, CANCELLED }
+enum class OrderFilter { ALL, UNPAID, ADDRESS, IN_TRANSIT, DELIVERED_UNPAID, OVERDUE, COMPLETED, DRAFTS, CANCELLED }
 
-data class OrderListItem(val row: OrderSummaryRow, val financials: OrderFinancials, val overdue: Boolean)
-
-fun OrderSummaryRow.reminderSnapshot(f: OrderFinancials) = OrderReminderSnapshot(
-    orderId = orderId,
-    status = fulfillmentStatus,
-    depositOutstanding = f.depositOutstanding,
-    outstanding = f.outstanding,
-    createdAt = createdAt,
-    orderedFromAlibabaOn = alibabaOrderedOn,
-    deliveredAt = deliveredAt,
-    paymentTermsDays = paymentTermsDays,
+data class OrderListItem(
+    val row: OrderSummaryRow,
+    val financials: OrderFinancials,
+    val overdue: Boolean,
+    val address: AddressStatus,
 )
 
 @HiltViewModel
@@ -47,7 +41,11 @@ class OrdersViewModel @Inject constructor(
     val items: StateFlow<List<OrderListItem>> = combine(all, query, filter) { rows, q, f ->
         val now = clock.instant()
         rows.asSequence()
-            .map { r -> r.financials().let { fin -> OrderListItem(r, fin, policy.isOverdue(r.reminderSnapshot(fin), now)) } }
+            .map { r ->
+                val fin = r.financials()
+                val snapshot = r.reminderSnapshot(fin)
+                OrderListItem(r, fin, policy.isOverdue(snapshot, now), policy.addressStatus(snapshot))
+            }
             .filter { it.matches(f) }
             .filter { q.isBlank() || it.row.matches(q.trim()) }
             .toList()
@@ -59,6 +57,7 @@ class OrdersViewModel @Inject constructor(
         return when (f) {
             OrderFilter.ALL -> s != FulfillmentStatus.CANCELLED
             OrderFilter.UNPAID -> active && financials.outstanding.isPositive
+            OrderFilter.ADDRESS -> address == AddressStatus.MISSING || address == AddressStatus.NOT_SENT
             OrderFilter.IN_TRANSIT -> s == FulfillmentStatus.SHIPPED
             OrderFilter.DELIVERED_UNPAID -> s == FulfillmentStatus.DELIVERED && financials.outstanding.isPositive
             OrderFilter.OVERDUE -> overdue

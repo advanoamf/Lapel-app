@@ -66,6 +66,8 @@ interface OrderDao {
         const val SUMMARY_SELECT = """
             SELECT o.id AS orderId, o.orderNumber, o.title, o.orderDate, o.fulfillmentStatus,
                    o.deliveryMethod, o.depositPercent, o.alibabaOrderedOn, o.deliveredAt, o.createdAt,
+                   (o.shippingAddress IS NOT NULL AND TRIM(o.shippingAddress) != '') AS hasAddress,
+                   o.addressSentToSupplier,
                    c.id AS customerId, c.name AS customerName, c.organization AS customerOrganization,
                    c.phone AS customerPhone, c.paymentTermsDays,
                    (SELECT COALESCE(SUM(i.quantitySold * i.unitPriceAgorot), 0)

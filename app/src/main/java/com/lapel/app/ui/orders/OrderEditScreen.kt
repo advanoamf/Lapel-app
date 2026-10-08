@@ -21,6 +21,7 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -50,6 +51,7 @@ import com.lapel.app.data.local.entity.CustomerEntity
 import com.lapel.app.ui.common.DateInput
 import com.lapel.app.ui.common.TextInput
 import com.lapel.domain.model.DeliveryMethod
+import com.lapel.domain.model.FulfillmentStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,6 +89,14 @@ fun OrderEditScreen(
                 DateInput(form.orderDate, { d -> d?.let { viewModel.edit { copy(orderDate = it) } } }, stringResource(R.string.field_order_date), Modifier.weight(1f))
                 DateInput(form.dueDate, { d -> viewModel.edit { copy(dueDate = d) } }, stringResource(R.string.field_due_date), Modifier.weight(1f))
             }
+            if (viewModel.isNew) {
+                Text(stringResource(R.string.field_initial_status), style = MaterialTheme.typography.labelLarge)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf(FulfillmentStatus.DRAFT, FulfillmentStatus.ORDERED_FROM_ALIBABA).forEach { s ->
+                        FilterChip(form.initialStatus == s, { viewModel.edit { copy(initialStatus = s) } }, { Text(stringResource(if (s == FulfillmentStatus.DRAFT) R.string.status_draft_quote else R.string.status_ordered)) })
+                    }
+                }
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 FilterChip(form.deliveryMethod == DeliveryMethod.FEDEX, { viewModel.edit { copy(deliveryMethod = DeliveryMethod.FEDEX) } }, { Text("FedEx") })
                 FilterChip(form.deliveryMethod == DeliveryMethod.SELF_PICKUP, { viewModel.edit { copy(deliveryMethod = DeliveryMethod.SELF_PICKUP) } }, { Text(stringResource(R.string.delivery_pickup)) })
@@ -120,6 +130,17 @@ fun OrderEditScreen(
                 DateInput(form.alibabaOrderedOn, { d -> viewModel.edit { copy(alibabaOrderedOn = d) } }, stringResource(R.string.field_alibaba_date), Modifier.weight(1f))
             }
             TextInput(form.supplierName, { v -> viewModel.edit { copy(supplierName = v) } }, stringResource(R.string.field_supplier))
+            if (form.deliveryMethod == DeliveryMethod.FEDEX) {
+                TextInput(form.shippingAddress, { v -> viewModel.edit { copy(shippingAddress = v) } }, stringResource(R.string.field_shipping_address), singleLine = false)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                        checked = form.addressSentToSupplier,
+                        enabled = form.shippingAddress.isNotBlank(),
+                        onCheckedChange = { c -> viewModel.edit { copy(addressSentToSupplier = c) } },
+                    )
+                    Text(stringResource(R.string.field_address_sent))
+                }
+            }
             TextInput(form.notes, { v -> viewModel.edit { copy(notes = v) } }, stringResource(R.string.field_notes), singleLine = false)
             if (err && !form.isValid) Text(stringResource(R.string.form_errors), color = MaterialTheme.colorScheme.error)
             Button(onClick = viewModel::save, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.action_save)) }

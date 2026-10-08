@@ -21,14 +21,22 @@ import androidx.compose.ui.unit.dp
 import com.lapel.app.R
 import com.lapel.app.data.local.dao.OrderSummaryRow
 import com.lapel.app.ui.common.FulfillmentChip
+import com.lapel.app.ui.common.AlertChip
 import com.lapel.app.ui.common.OverdueChip
 import com.lapel.app.ui.common.PaymentChip
 import com.lapel.app.ui.common.formatted
 import com.lapel.domain.finance.OrderFinancials
 import com.lapel.domain.model.FulfillmentStatus
+import com.lapel.domain.reminder.AddressStatus
 
 @Composable
-fun OrderCard(row: OrderSummaryRow, financials: OrderFinancials, overdue: Boolean, modifier: Modifier = Modifier) {
+fun OrderCard(
+    row: OrderSummaryRow,
+    financials: OrderFinancials,
+    overdue: Boolean,
+    modifier: Modifier = Modifier,
+    address: AddressStatus = AddressStatus.NOT_NEEDED,
+) {
     Card(modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -52,6 +60,11 @@ fun OrderCard(row: OrderSummaryRow, financials: OrderFinancials, overdue: Boolea
                     PaymentChip(financials.paymentStatus)
                 }
                 if (overdue) OverdueChip()
+                when (address) {
+                    AddressStatus.MISSING -> AlertChip(stringResource(R.string.address_missing))
+                    AddressStatus.NOT_SENT -> AlertChip(stringResource(R.string.address_not_sent))
+                    else -> Unit
+                }
                 if (row.activeShipments > 0) Icon(Icons.Outlined.LocalShipping, stringResource(R.string.status_shipped))
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
