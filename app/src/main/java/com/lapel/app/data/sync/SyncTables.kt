@@ -42,6 +42,11 @@ object SyncTables {
     private const val NOW_MS = "CAST(ROUND((julianday('now') - 2440587.5) * 86400000) AS INTEGER)"
     private const val NOT_APPLYING = "(SELECT applying FROM sync_state WHERE id = 1) = 0"
 
+    // Android's SQLite runs with recursive triggers on, so the trigger's own UPDATE would fire it
+    // again; it sets the same flag the sync engine uses while it writes.
+    private const val GUARD_ON = "UPDATE sync_state SET applying = 1 WHERE id = 1;"
+    private const val GUARD_OFF = "UPDATE sync_state SET applying = 0 WHERE id = 1;"
+
     /** Creates the sync bookkeeping tables and change-tracking triggers. Safe to run repeatedly. */
     fun install(db: SupportSQLiteDatabase) {
         db.execSQL(
@@ -55,14 +60,14 @@ object SyncTables {
         )
         ALL.forEach { t ->
             db.execSQL(
-                "CREATE TRIGGER IF NOT EXISTS sync_ins_${t.name} AFTER INSERT ON ${t.name} WHEN $NOT_APPLYING BEGIN " +
+                "CREATE TRIGGER IF NOT EXISTS sync_ins_${t.name} AFTER INSERT ON ${t.name} WHEN $NOT_APPLYING BEGIN $GUARD_ON " +
                     "UPDATE ${t.name} SET uid = COALESCE(NEW.uid, lower(hex(randomblob(16)))), dirty = 1, " +
-                    "syncUpdatedAt = $NOW_MS WHERE id = NEW.id; END",
+                    "syncUpdatedAt = $NOW_MS WHERE id = NEW.id; $GUARD_OFF END",
             )
             db.execSQL(
-                "CREATE TRIGGER IF NOT EXISTS sync_upd_${t.name} AFTER UPDATE ON ${t.name} WHEN $NOT_APPLYING BEGIN " +
+                "CREATE TRIGGER IF NOT EXISTS sync_upd_${t.name} AFTER UPDATE ON ${t.name} WHEN $NOT_APPLYING BEGIN $GUARD_ON " +
                     "UPDATE ${t.name} SET uid = COALESCE(NEW.uid, OLD.uid), dirty = 1, " +
-                    "syncUpdatedAt = $NOW_MS WHERE id = NEW.id; END",
+                    "syncUpdatedAt = $NOW_MS WHERE id = NEW.id; $GUARD_OFF END",
             )
             db.execSQL(
                 "CREATE TRIGGER IF NOT EXISTS sync_del_${t.name} AFTER DELETE ON ${t.name} " +
