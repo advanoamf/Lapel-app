@@ -1,0 +1,128 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Lapel – one-time setup. Lets GitHub Actions deploy the Lapel server into this account
+  (no long-lived keys) and emails you if the monthly bill goes above a few cents.
+
+Parameters:
+  AlertEmail:
+    Type: String
+    Description: Email for billing alerts
+  GitHubOwner:
+    Type: String
+    Default: advanoamf
+  GitHubRepo:
+    Type: String
+    Default: Lapel-app
+  CreateGitHubOidcProvider:
+    Type: String
+    AllowedValues: ["true", "false"]
+    Default: "true"
+    Description: Choose false only if this AWS account already has the GitHub OIDC provider (token.actions.githubusercontent.com).
+
+Conditions:
+  CreateProvider: !Equals [!Ref CreateGitHubOidcProvider, "true"]
+
+Resources:
+  GitHubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Condition: CreateProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList: [sts.amazonaws.com]
+      ThumbprintList: [6938fd4d98bab03faadb97b34396831e3780aea1]
+
+  DeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: lapel-github-deploy
+      Description: Assumed by GitHub Actions in the Lapel repository to deploy the server stack
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+              StringLike:
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOwner}/${GitHubRepo}:*
+      Policies:
+        - PolicyName: lapel-deploy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: CloudFormation
+                Effect: Allow
+                Action: cloudformation:*
+                Resource:
+                  - !Sub arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/lapel-*/*
+                  - !Sub arn:aws:cloudformation:${AWS::Region}:aws:transform/Serverless-2016-10-31
+              - Sid: CloudFormationRead
+                Effect: Allow
+                Action: [cloudformation:ValidateTemplate, cloudformation:ListStacks, cloudformation:GetTemplateSummary]
+                Resource: "*"
+              - Sid: ArtifactBucket
+                Effect: Allow
+                Action: [s3:CreateBucket, s3:PutObject, s3:GetObject, s3:ListBucket, s3:PutBucketPolicy,
+                         s3:PutBucketPublicAccessBlock, s3:PutEncryptionConfiguration, s3:PutLifecycleConfiguration,
+                         s3:GetBucketLocation, s3:PutBucketTagging, s3:PutBucketVersioning, s3:DeleteObject]
+                Resource: [!Sub "arn:aws:s3:::lapel-artifacts-${AWS::AccountId}", !Sub "arn:aws:s3:::lapel-artifacts-${AWS::AccountId}/*"]
+              - Sid: Lambda
+                Effect: Allow
+                Action: lambda:*
+                Resource:
+                  - !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:lapel-*
+              - Sid: DynamoDB
+                Effect: Allow
+                Action: dynamodb:*
+                Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/lapel-*
+              - Sid: Logs
+                Effect: Allow
+                Action: logs:*
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/lapel-*
+              - Sid: Scheduler
+                Effect: Allow
+                Action: scheduler:*
+                Resource: !Sub arn:aws:scheduler:${AWS::Region}:${AWS::AccountId}:schedule/*/lapel-*
+              - Sid: RolesForLapelOnly
+                Effect: Allow
+                Action: [iam:CreateRole, iam:DeleteRole, iam:GetRole, iam:PassRole, iam:TagRole, iam:UntagRole,
+                         iam:PutRolePolicy, iam:DeleteRolePolicy, iam:GetRolePolicy,
+                         iam:AttachRolePolicy, iam:DetachRolePolicy, iam:UpdateAssumeRolePolicy]
+                Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/lapel-*
+
+  MonthlyBudget:
+    Type: AWS::Budgets::Budget
+    Properties:
+      Budget:
+        BudgetName: lapel-monthly
+        BudgetType: COST
+        TimeUnit: MONTHLY
+        BudgetLimit:
+          Amount: 1
+          Unit: USD
+      NotificationsWithSubscribers:
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 50
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref AlertEmail
+        - Notification:
+            NotificationType: FORECASTED
+            ComparisonOperator: GREATER_THAN
+            Threshold: 100
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref AlertEmail
+
+Outputs:
+  DeployRoleArn:
+    Description: Copy this value into GitHub → Settings → Secrets and variables → Actions → AWS_DEPLOY_ROLE_ARN
+    Value: !GetAtt DeployRole.Arn

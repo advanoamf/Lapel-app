@@ -6,7 +6,7 @@
 |---|---|
 | Payments | **No payment-gateway integration.** Customers pay outside the app (Bit, PayBox, bank transfer). The owner records payments manually; the app's job is to **remind** the owner to collect. |
 | Payment schedule | **50% deposit** when the Alibaba order is placed, **50% balance** when the product is delivered to the client. |
-| Server | **None (Option A).** Everything runs on-device; WorkManager polls FedEx directly. |
+| Server | **AWS free tier** (changed): Lambda Function URL + DynamoDB for backup and access from computer and phone. No static IP, no Firebase. See [08](08-cloud-server.md). |
 | Currency | **ILS (₪) only.** Supplier costs are entered as the **₪ amount actually charged** for the Alibaba order (no USD entry in the app). Default **₪8 bank fee** per order. Customs and referral commission in ₪. |
 | Carrier | **Always FedEx** → FedEx Track API, no aggregator. Owner has a FedEx account for production API credentials. |
 | Order structure | One order can have **several pin designs (line items)** and **several FedEx tracking numbers**. Each line has **qty ordered from supplier** and **qty sold to client** (extras/defects). |
@@ -14,7 +14,7 @@
 | Delivery | FedEx direct to client, or **self pickup** (no tracking). |
 | Stock pins | **In v1.** Designs bought in bulk and sold a few at a time to many individuals (סיכת קווה / רעים / חיים / שרוליק): price per pin, mail (Israel Post) or pickup, sent/arrived, remaining stock. |
 | Language | **Hebrew (RTL) is the default**, English as second language. |
-| Users / devices | Single user, single phone. Room is the only database; backup via Android Auto Backup + manual export. |
+| Users / devices | Single user; phone app (offline + sync) and a web page on the computer. |
 | Overdue rule | Deposit overdue: order confirmed but deposit not recorded. Balance overdue: shipment **Delivered** and balance not recorded after N days (default 3) — or after the customer's payment terms (e.g. net+60). |
 
 ## Key design choice: two independent statuses
