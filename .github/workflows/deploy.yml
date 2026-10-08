@@ -46,6 +46,22 @@ jobs:
         if: steps.check.outputs.ready == 'true'
         run: ./gradlew -p server test lambdaZip --console=plain
 
+      - name: Diagnose AWS sign-in (no secrets printed)
+        if: steps.check.outputs.ready == 'true'
+        env:
+          ROLE: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+        run: |
+          if [[ "$ROLE" =~ ^arn:aws:iam::[0-9]{12}:role/lapel-github-deploy$ ]]; then
+            echo "AWS_DEPLOY_ROLE_ARN looks right (role lapel-github-deploy)."
+          else
+            echo "::warning::AWS_DEPLOY_ROLE_ARN does not look like arn:aws:iam::<12 digits>:role/lapel-github-deploy"
+            echo "It starts with: ${ROLE:0:20}... and is ${#ROLE} characters long"
+          fi
+          TOKEN=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r .value)
+          echo "GitHub identity sent to AWS:"
+          echo "$TOKEN" | cut -d. -f2 | tr '_-' '/+' | base64 -d 2>/dev/null | jq '{iss, aud, sub}' || true
+
       - uses: aws-actions/configure-aws-credentials@v4
         if: steps.check.outputs.ready == 'true'
         with:
