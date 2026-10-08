@@ -170,4 +170,20 @@
     <string name="whatsapp_address_request">Hi %1$s, about your pin order (#%2$s) – could you please send the full shipping address (street, number, city, postcode and phone)? Thanks!</string>
     <string name="field_customs">Customs (₪, if charged)</string>
     <string name="app_version">Version %1$s</string>
+    <string name="sync_title">Sync with the server</string>
+    <string name="sync_description">Connecting backs up all data and lets you work from the computer too. The first connection uploads everything on this phone.</string>
+    <string name="sync_server">Server address</string>
+    <string name="sync_password">Password</string>
+    <string name="sync_connect">Connect and sync</string>
+    <string name="sync_connected">Connected · last sync: %1$s</string>
+    <string name="sync_never">not yet</string>
+    <string name="sync_pending">%1$d changes waiting to be sent</string>
+    <string name="sync_last_error">Last error: %1$s</string>
+    <string name="sync_now">Sync now</string>
+    <string name="sync_logout">Disconnect</string>
+    <string name="sync_working">Syncing…</string>
+    <string name="sync_wrong_password">Wrong password</string>
+    <string name="sync_done">Sync done: %1$d sent, %2$d received</string>
+    <string name="sync_failed">Sync failed: %1$s</string>
+    <string name="sync_login_expired">Please connect again</string>
 </resources>

@@ -9,10 +9,15 @@ import androidx.compose.runtime.mutableStateOf
 import com.lapel.app.ui.navigation.LapelApp
 import com.lapel.app.ui.theme.LapelTheme
 import com.lapel.app.work.ReminderNotifications
+import com.lapel.app.data.sync.SyncSettings
+import com.lapel.app.work.SyncScheduler
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject lateinit var syncSettings: SyncSettings
 
     /** Order to open, when started from a reminder notification. */
     private val openOrderId = mutableStateOf<Long?>(null)
@@ -26,6 +31,11 @@ class MainActivity : ComponentActivity() {
                 LapelApp(openOrderId = openOrderId.value, onOrderOpened = { openOrderId.value = null })
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (syncSettings.isConfigured) SyncScheduler.syncNow(this) // pick up changes made on the computer
     }
 
     override fun onNewIntent(intent: Intent) {

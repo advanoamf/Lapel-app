@@ -9,6 +9,8 @@ import com.lapel.app.data.local.LapelDatabase
 import kotlinx.coroutines.test.runTest
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -25,7 +27,7 @@ class MigrationTest {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
 
-    private fun createVersion(version: Int, name: String) {
+    private fun createVersion(version: Int, name: String, orderColumns: String = "", orderValues: String = "") {
         val schema = JSONObject(File("schemas/com.lapel.app.data.local.LapelDatabase/$version.json").readText())
             .getJSONObject("database")
         val file = context.getDatabasePath(name).apply { parentFile?.mkdirs(); delete() }
@@ -49,8 +51,8 @@ class MigrationTest {
             db.execSQL(
                 "INSERT INTO orders (id, customerId, orderNumber, title, orderDate, dueDate, fulfillmentStatus, depositPercent, " +
                     "discountAgorot, deliveryMethod, alibabaOrderNumber, alibabaOrderedOn, supplierName, qualityOk, deliveredAt, " +
-                    "completedAt, notes, createdAt, updatedAt) " +
-                    "VALUES (1, 1, '170', 'Branch', 20000, NULL, 'DRAFT', 50, 0, 'FEDEX', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0)",
+                    "completedAt, notes, createdAt, updatedAt$orderColumns) " +
+                    "VALUES (1, 1, '170', 'Branch', 20000, NULL, 'DRAFT', 50, 0, 'FEDEX', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0$orderValues)",
             )
             db.version = version
         }
@@ -71,7 +73,48 @@ class MigrationTest {
             assertEquals(60, summary.paymentTermsDays)
             assertEquals(false, summary.hasAddress)
             assertEquals(false, summary.addressSentToSupplier)
-            assertEquals(2, db.openHelper.readableDatabase.version)
+            assertEquals(3, db.openHelper.readableDatabase.version)
+        } finally {
+            db.close()
+        }
+    }
+
+    @Test fun `upgrade from version 2 marks every existing row for the first upload and tracks new changes`() = runTest {
+        val name = "migration-test-2.db"
+        createVersion(2, name, ", shippingAddress, addressSentToSupplier", ", 'Herzl 1, Tel Aviv', 1")
+
+        val db = Room.databaseBuilder(context, LapelDatabase::class.java, name)
+            .addMigrations(*ALL_MIGRATIONS)
+            .allowMainThreadQueries()
+            .build()
+        try {
+            val summary = db.orderDao().getSummary(1)!!
+            assertEquals(true, summary.hasAddress)
+            assertEquals(true, summary.addressSentToSupplier)
+
+            val sql = db.openHelper.writableDatabase
+            sql.query("SELECT uid, dirty FROM orders WHERE id = 1").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(32, c.getString(0).length)
+                assertEquals(1, c.getInt(1))
+            }
+            val customerUid = sql.query("SELECT uid FROM customers WHERE id = 1").use { c -> c.moveToFirst(); c.getString(0) }
+            assertNotEquals(customerUid, sql.query("SELECT uid FROM orders WHERE id = 1").use { c -> c.moveToFirst(); c.getString(0) })
+
+            // The triggers installed by the migration track new edits and deletions.
+            sql.execSQL("UPDATE customers SET dirty = 0")
+            val customer = db.customerDao().get(1)!!
+            db.customerDao().update(customer.copy(name = "Dana B"))
+            sql.query("SELECT dirty, uid FROM customers WHERE id = 1").use { c ->
+                c.moveToFirst()
+                assertEquals(1, c.getInt(0))
+                assertEquals(customerUid, c.getString(1))
+            }
+            db.orderDao().deleteOrder(db.orderDao().getOrder(1)!!)
+            sql.query("SELECT type FROM sync_tombstones").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("ORDER", c.getString(0))
+            }
         } finally {
             db.close()
         }

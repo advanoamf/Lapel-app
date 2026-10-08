@@ -22,6 +22,8 @@ android {
         versionCode = build
         versionName = "0.1.$build"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // The owner's server (Lambda Function URL); can be changed in Settings.
+        buildConfigField("String", "DEFAULT_SERVER_URL", "\"https://otvfrbinsqjmrgaythqai5e5wy0acgtq.lambda-url.eu-central-1.on.aws/\"")
     }
 
     signingConfigs {

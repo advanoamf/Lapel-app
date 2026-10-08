@@ -1,5 +1,6 @@
 package com.lapel.app.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -18,7 +19,7 @@ import java.time.Instant
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index("orderId"), Index(value = ["trackingNumber"], unique = true)],
+    indices = [Index(value = ["uid"], unique = true), Index("orderId"), Index(value = ["trackingNumber"], unique = true)],
 )
 data class ShipmentEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -38,6 +39,12 @@ data class ShipmentEntity(
     /** False once delivered or tracking stopped; inactive shipments are not polled. */
     val trackingActive: Boolean = true,
     val createdAt: Instant,
+    /** Sync id shared with the server; set by a database trigger. */
+    val uid: String? = null,
+    /** When this row last changed (ms); set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val syncUpdatedAt: Long = 0,
+    /** Changed here and not yet sent to the server; set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val dirty: Boolean = false,
 )
 
 @Entity(
@@ -51,7 +58,7 @@ data class ShipmentEntity(
         ),
     ],
     // Re-polling the same FedEx data must not create duplicates.
-    indices = [Index(value = ["shipmentId", "occurredAt", "eventCode"], unique = true)],
+    indices = [Index(value = ["uid"], unique = true), Index(value = ["shipmentId", "occurredAt", "eventCode"], unique = true)],
 )
 data class TrackingEventEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -60,6 +67,12 @@ data class TrackingEventEntity(
     val eventCode: String,
     val description: String,
     val location: String?,
+    /** Sync id shared with the server; set by a database trigger. */
+    val uid: String? = null,
+    /** When this row last changed (ms); set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val syncUpdatedAt: Long = 0,
+    /** Changed here and not yet sent to the server; set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val dirty: Boolean = false,
 )
 
 @Entity(tableName = "reminder_log", indices = [Index(value = ["orderId", "type"])])

@@ -1,12 +1,13 @@
 package com.lapel.app.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.time.Instant
 import java.time.LocalDate
 
-@Entity(tableName = "customers", indices = [Index("name")])
+@Entity(tableName = "customers", indices = [Index(value = ["uid"], unique = true), Index("name")])
 data class CustomerEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
@@ -22,4 +23,10 @@ data class CustomerEntity(
     val customerSince: LocalDate,
     val createdAt: Instant,
     val updatedAt: Instant,
+    /** Sync id shared with the server; set by a database trigger. */
+    val uid: String? = null,
+    /** When this row last changed (ms); set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val syncUpdatedAt: Long = 0,
+    /** Changed here and not yet sent to the server; set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val dirty: Boolean = false,
 )

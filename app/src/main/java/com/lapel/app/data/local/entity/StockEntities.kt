@@ -1,5 +1,6 @@
 package com.lapel.app.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -18,7 +19,7 @@ import java.time.LocalDate
             onDelete = ForeignKey.RESTRICT,
         ),
     ],
-    indices = [Index("designId")],
+    indices = [Index(value = ["uid"], unique = true), Index("designId")],
 )
 data class StockBatchEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -28,6 +29,12 @@ data class StockBatchEntity(
     val writtenOff: Int = 0,
     val purchasedOn: LocalDate,
     val notes: String?,
+    /** Sync id shared with the server; set by a database trigger. */
+    val uid: String? = null,
+    /** When this row last changed (ms); set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val syncUpdatedAt: Long = 0,
+    /** Changed here and not yet sent to the server; set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val dirty: Boolean = false,
 )
 
 @Entity(
@@ -40,7 +47,7 @@ data class StockBatchEntity(
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index("batchId")],
+    indices = [Index(value = ["uid"], unique = true), Index("batchId")],
 )
 data class StockBatchCostEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -48,6 +55,12 @@ data class StockBatchCostEntity(
     val type: CostType,
     val amountAgorot: Long,
     val note: String?,
+    /** Sync id shared with the server; set by a database trigger. */
+    val uid: String? = null,
+    /** When this row last changed (ms); set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val syncUpdatedAt: Long = 0,
+    /** Changed here and not yet sent to the server; set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val dirty: Boolean = false,
 )
 
 @Entity(
@@ -66,7 +79,7 @@ data class StockBatchCostEntity(
             onDelete = ForeignKey.RESTRICT,
         ),
     ],
-    indices = [Index("batchId"), Index("customerId")],
+    indices = [Index(value = ["uid"], unique = true), Index("batchId"), Index("customerId")],
 )
 data class StockSaleEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -86,4 +99,10 @@ data class StockSaleEntity(
     /** Israel Post number ("RR…IL"); shown and copied, not tracked automatically. */
     val postTrackingNumber: String?,
     val notes: String?,
+    /** Sync id shared with the server; set by a database trigger. */
+    val uid: String? = null,
+    /** When this row last changed (ms); set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val syncUpdatedAt: Long = 0,
+    /** Changed here and not yet sent to the server; set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val dirty: Boolean = false,
 )

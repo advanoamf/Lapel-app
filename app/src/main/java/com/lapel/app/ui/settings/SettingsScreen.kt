@@ -49,6 +49,7 @@ fun SettingsScreen(viewModel: ImportViewModel = hiltViewModel()) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { Text(stringResource(R.string.tab_settings), style = MaterialTheme.typography.headlineMedium) }
+        item { SyncCard() }
         item {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

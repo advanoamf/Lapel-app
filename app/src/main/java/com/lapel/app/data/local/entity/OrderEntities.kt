@@ -23,7 +23,7 @@ import java.time.LocalDate
             onDelete = ForeignKey.RESTRICT,
         ),
     ],
-    indices = [Index("customerId"), Index("fulfillmentStatus"), Index("orderDate"), Index("orderNumber")],
+    indices = [Index(value = ["uid"], unique = true), Index("customerId"), Index("fulfillmentStatus"), Index("orderDate"), Index("orderNumber")],
 )
 data class OrderEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -53,6 +53,12 @@ data class OrderEntity(
     val shippingAddress: String? = null,
     /** The address was passed on to the manufacturer. */
     @ColumnInfo(defaultValue = "0") val addressSentToSupplier: Boolean = false,
+    /** Sync id shared with the server; set by a database trigger. */
+    val uid: String? = null,
+    /** When this row last changed (ms); set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val syncUpdatedAt: Long = 0,
+    /** Changed here and not yet sent to the server; set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val dirty: Boolean = false,
 )
 
 @Entity(
@@ -71,7 +77,7 @@ data class OrderEntity(
             onDelete = ForeignKey.SET_NULL,
         ),
     ],
-    indices = [Index("orderId"), Index("designId")],
+    indices = [Index(value = ["uid"], unique = true), Index("orderId"), Index("designId")],
 )
 data class OrderItemEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -87,6 +93,12 @@ data class OrderItemEntity(
     val quantitySold: Int,
     val unitPriceAgorot: Long,
     val artworkUri: String?,
+    /** Sync id shared with the server; set by a database trigger. */
+    val uid: String? = null,
+    /** When this row last changed (ms); set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val syncUpdatedAt: Long = 0,
+    /** Changed here and not yet sent to the server; set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val dirty: Boolean = false,
 )
 
 @Entity(
@@ -99,7 +111,7 @@ data class OrderItemEntity(
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index("orderId")],
+    indices = [Index(value = ["uid"], unique = true), Index("orderId")],
 )
 data class OrderCostEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -107,6 +119,12 @@ data class OrderCostEntity(
     val type: CostType,
     val amountAgorot: Long,
     val note: String?,
+    /** Sync id shared with the server; set by a database trigger. */
+    val uid: String? = null,
+    /** When this row last changed (ms); set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val syncUpdatedAt: Long = 0,
+    /** Changed here and not yet sent to the server; set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val dirty: Boolean = false,
 )
 
 @Entity(
@@ -119,7 +137,7 @@ data class OrderCostEntity(
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index("orderId")],
+    indices = [Index(value = ["uid"], unique = true), Index("orderId")],
 )
 data class StatusChangeEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -128,4 +146,10 @@ data class StatusChangeEntity(
     val toStatus: FulfillmentStatus,
     val source: ChangeSource,
     val at: Instant,
+    /** Sync id shared with the server; set by a database trigger. */
+    val uid: String? = null,
+    /** When this row last changed (ms); set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val syncUpdatedAt: Long = 0,
+    /** Changed here and not yet sent to the server; set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val dirty: Boolean = false,
 )

@@ -1,5 +1,6 @@
 package com.lapel.app.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -26,7 +27,7 @@ import java.time.LocalDate
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index("orderId"), Index("stockSaleId")],
+    indices = [Index(value = ["uid"], unique = true), Index("orderId"), Index("stockSaleId")],
 )
 data class PaymentEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -39,4 +40,10 @@ data class PaymentEntity(
     /** Bank reference / Bit confirmation. */
     val reference: String?,
     val createdAt: Instant,
+    /** Sync id shared with the server; set by a database trigger. */
+    val uid: String? = null,
+    /** When this row last changed (ms); set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val syncUpdatedAt: Long = 0,
+    /** Changed here and not yet sent to the server; set by a database trigger. */
+    @ColumnInfo(defaultValue = "0") val dirty: Boolean = false,
 )

@@ -171,4 +171,20 @@
     <string name="whatsapp_address_request">היי %1$s, לגבי הזמנת הסיכות (מס׳ %2$s) – אפשר בבקשה כתובת מלאה למשלוח (רחוב, מספר, עיר, מיקוד וטלפון)? תודה!</string>
     <string name="field_customs">מכס (₪, אם נדרש)</string>
     <string name="app_version">גרסה %1$s</string>
+    <string name="sync_title">סנכרון עם השרת</string>
+    <string name="sync_description">חיבור לשרת שומר גיבוי של כל הנתונים ומאפשר לעבוד גם מהמחשב. בחיבור הראשון כל מה שבטלפון יעלה לשרת.</string>
+    <string name="sync_server">כתובת השרת</string>
+    <string name="sync_password">סיסמה</string>
+    <string name="sync_connect">חיבור וסנכרון</string>
+    <string name="sync_connected">מחובר · סנכרון אחרון: %1$s</string>
+    <string name="sync_never">עוד לא</string>
+    <string name="sync_pending">%1$d שינויים ממתינים לשליחה</string>
+    <string name="sync_last_error">שגיאה אחרונה: %1$s</string>
+    <string name="sync_now">סנכרון עכשיו</string>
+    <string name="sync_logout">התנתקות</string>
+    <string name="sync_working">מסנכרן…</string>
+    <string name="sync_wrong_password">סיסמה שגויה</string>
+    <string name="sync_done">הסנכרון הצליח: נשלחו %1$d, התקבלו %2$d</string>
+    <string name="sync_failed">הסנכרון נכשל: %1$s</string>
+    <string name="sync_login_expired">צריך להתחבר מחדש</string>
 </resources>
