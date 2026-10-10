@@ -48,6 +48,9 @@ data class ReminderLogEntry(
 
 data class Reminder(val orderId: Long, val type: ReminderType, val amount: Money)
 
+/** Something on the home screen that needs the owner's attention. */
+data class OpenItem(val reminder: Reminder, val overdue: Boolean)
+
 /**
  * Decides which payment reminders to send today. Runs once a day; "every N days" is measured in
  * calendar days in Israel time so a reminder sent at 10:00:05 is due again 3 days later at 10:00.
@@ -64,6 +67,25 @@ class ReminderPolicy(private val settings: ReminderSettings = ReminderSettings()
             val orderLog = byOrder[order.orderId].orEmpty()
             listOfNotNull(reminderFor(order, orderLog, now), addressReminder(order, orderLog, now))
         }
+    }
+
+    /**
+     * Everything that needs attention right now, most urgent first (home screen). Unlike
+     * [remindersDue] it ignores when something was last mentioned: an item stays until it is done.
+     */
+    fun openItems(orders: List<OrderReminderSnapshot>, now: Instant): List<OpenItem> {
+        val byId = orders.associateBy { it.orderId }
+        return remindersDue(orders, emptyList(), now)
+            .map { r ->
+                val overdue = r.type == ReminderType.BALANCE_OVERDUE ||
+                    (r.type == ReminderType.DEPOSIT_DUE && isOverdue(byId.getValue(r.orderId), now))
+                OpenItem(r, overdue)
+            }
+            .sortedWith(
+                compareByDescending<OpenItem> { it.overdue }
+                    .thenBy { URGENCY.indexOf(it.reminder.type) }
+                    .thenByDescending { it.reminder.amount.agorot },
+            )
     }
 
     /**
@@ -167,6 +189,17 @@ class ReminderPolicy(private val settings: ReminderSettings = ReminderSettings()
         val delivered = order.deliveredAt ?: return null
         val days = maxOf(order.paymentTermsDays, settings.overdueGraceDays)
         return today(delivered).plusDays(days.toLong())
+    }
+
+    private companion object {
+        val URGENCY = listOf(
+            ReminderType.BALANCE_OVERDUE,
+            ReminderType.BALANCE_DUE,
+            ReminderType.DEPOSIT_DUE,
+            ReminderType.ADDRESS_NOT_SENT,
+            ReminderType.ADDRESS_MISSING,
+            ReminderType.STALE_DRAFT,
+        )
     }
 
     private fun today(instant: Instant): LocalDate = instant.atZone(settings.zone).toLocalDate()

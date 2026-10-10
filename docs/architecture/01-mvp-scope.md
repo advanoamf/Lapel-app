@@ -15,6 +15,7 @@
 | Stock pins | **In v1.** Designs bought in bulk and sold a few at a time to many individuals (סיכת קווה / רעים / חיים / שרוליק): price per pin, mail (Israel Post) or pickup, sent/arrived, remaining stock. |
 | Language | **Hebrew (RTL) is the default**, English as second language. |
 | Users / devices | Single user; phone app (offline + sync) and a web page on the computer. |
+| Reminders | **On the home screen, not as notifications** (owner's choice): a "to do" list of deposits, balances, overdue money, missing addresses and old drafts, plus income / expenses / profit of the orders placed in the last 30 days (or this / last month). |
 | Overdue rule | Deposit overdue: order confirmed but deposit not recorded. Balance overdue: shipment **Delivered** and balance not recorded after N days (default 3) — or after the customer's payment terms (e.g. net+60). |
 
 ## Key design choice: two independent statuses

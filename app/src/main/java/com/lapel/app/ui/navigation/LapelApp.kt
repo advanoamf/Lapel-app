@@ -15,7 +15,6 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -31,6 +30,7 @@ import androidx.navigation.toRoute
 import com.lapel.app.R
 import com.lapel.app.ui.common.ComingSoonScreen
 import com.lapel.app.ui.customers.CustomerDetailScreen
+import com.lapel.app.ui.dashboard.DashboardScreen
 import com.lapel.app.ui.customers.CustomerEditScreen
 import com.lapel.app.ui.customers.CustomersScreen
 import com.lapel.app.ui.orders.OrderDetailScreen
@@ -51,15 +51,8 @@ private enum class TopLevelDestination(
 }
 
 @Composable
-fun LapelApp(openOrderId: Long? = null, onOrderOpened: () -> Unit = {}) {
+fun LapelApp() {
     val navController = rememberNavController()
-    LaunchedEffect(openOrderId) {
-        openOrderId?.let {
-            navController.navigate(OrderDetailRoute(it))
-            onOrderOpened()
-        }
-    }
-    NotificationPermissionRequest()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
 
@@ -89,7 +82,7 @@ fun LapelApp(openOrderId: Long? = null, onOrderOpened: () -> Unit = {}) {
             startDestination = DashboardRoute,
             modifier = Modifier.padding(padding).consumeWindowInsets(padding),
         ) {
-            composable<DashboardRoute> { ComingSoonScreen(R.string.tab_dashboard, R.string.coming_dashboard) }
+            composable<DashboardRoute> { DashboardScreen(onOpenOrder = { navController.navigate(OrderDetailRoute(it)) }) }
             composable<OrdersRoute> {
                 OrdersScreen(
                     onOpen = { navController.navigate(OrderDetailRoute(it)) },
@@ -140,20 +133,5 @@ fun LapelApp(openOrderId: Long? = null, onOrderOpened: () -> Unit = {}) {
             }
             composable<SettingsRoute> { SettingsScreen() }
         }
-    }
-}
-
-/** Asks once for permission to show reminders (Android 13+). */
-@Composable
-private fun NotificationPermissionRequest() {
-    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) return
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
-        androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
-    ) { }
-    LaunchedEffect(Unit) {
-        val granted = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) ==
-            android.content.pm.PackageManager.PERMISSION_GRANTED
-        if (!granted) launcher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
     }
 }

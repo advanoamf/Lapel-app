@@ -80,20 +80,6 @@ fun SettingsScreen(viewModel: ImportViewModel = hiltViewModel()) {
             }
         }
         item {
-            val context = androidx.compose.ui.platform.LocalContext.current
-            var ran by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.reminders_title), style = MaterialTheme.typography.titleMedium)
-                    Text(stringResource(R.string.reminders_description), style = MaterialTheme.typography.bodyMedium)
-                    OutlinedButton(onClick = { com.lapel.app.work.ReminderScheduler.runNow(context); ran = true }) {
-                        Text(stringResource(R.string.reminders_run_now))
-                    }
-                    if (ran) Text(stringResource(R.string.reminders_run_now_done), style = MaterialTheme.typography.bodySmall)
-                }
-            }
-        }
-        item {
             Text(
                 stringResource(R.string.app_version, com.lapel.app.BuildConfig.VERSION_NAME),
                 style = MaterialTheme.typography.bodySmall,

@@ -151,3 +151,45 @@ class AddressReminderTest {
         assertEquals(setOf(ReminderType.DEPOSIT_DUE, ReminderType.ADDRESS_MISSING), types(both, emptyList(), at(11)).toSet())
     }
 }
+
+class OpenItemsTest {
+    private val zone = ZoneId.of("Asia/Jerusalem")
+    private val policy = ReminderPolicy()
+    private fun at(day: Int): Instant = LocalDateTime.of(2026, 3, day, 10, 0).atZone(zone).toInstant()
+
+    private val base = OrderReminderSnapshot(
+        orderId = 1,
+        status = FulfillmentStatus.ORDERED_FROM_ALIBABA,
+        depositOutstanding = Money.ZERO,
+        outstanding = Money.ZERO,
+        createdAt = at(1),
+        orderedFromAlibabaOn = LocalDate.of(2026, 3, 1),
+        deliveredAt = null,
+        paymentTermsDays = 0,
+        orderDate = LocalDate.of(2026, 3, 1),
+    )
+
+    @Test fun `items stay until done, overdue money first`() {
+        val deposit = base.copy(orderId = 1, depositOutstanding = Money.shekels(150), outstanding = Money.shekels(300))
+        val overdue = base.copy(
+            orderId = 2, status = FulfillmentStatus.DELIVERED, outstanding = Money.shekels(400), deliveredAt = at(2),
+        )
+        val address = base.copy(orderId = 3, hasAddress = false, addressSentToSupplier = false)
+        val paid = base.copy(orderId = 4)
+
+        val items = policy.openItems(listOf(address, deposit, overdue, paid), at(20))
+        assertEquals(listOf(2L, 1L, 3L), items.map { it.reminder.orderId })
+        assertEquals(listOf(true, true, false), items.map { it.overdue })
+        assertEquals(ReminderType.BALANCE_OVERDUE, items[0].reminder.type)
+
+        // Same answer every day: nothing is "already sent".
+        assertEquals(items, policy.openItems(listOf(address, deposit, overdue, paid), at(20)))
+    }
+
+    @Test fun `deposit just asked for is open but not overdue`() {
+        val fresh = base.copy(depositOutstanding = Money.shekels(150), orderedFromAlibabaOn = LocalDate.of(2026, 3, 19))
+        val item = policy.openItems(listOf(fresh), at(20)).single()
+        assertEquals(ReminderType.DEPOSIT_DUE, item.reminder.type)
+        assertFalse(item.overdue)
+    }
+}
