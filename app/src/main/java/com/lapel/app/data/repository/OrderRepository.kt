@@ -76,6 +76,10 @@ class OrderRepository @Inject constructor(
                 fulfillmentStatus = existing.fulfillmentStatus,
                 deliveredAt = existing.deliveredAt,
                 completedAt = existing.completedAt,
+                // Organization steps are ticked on the order screen, not in this form.
+                quoteApprovedOn = existing.quoteApprovedOn,
+                invoiceIssuedOn = existing.invoiceIssuedOn,
+                receiptIssuedOn = existing.receiptIssuedOn,
                 createdAt = existing.createdAt,
                 updatedAt = clock.instant(),
             ),
@@ -142,6 +146,12 @@ class OrderRepository @Inject constructor(
     suspend fun setAddressSent(orderId: Long, sent: Boolean) {
         val order = orders.getOrder(orderId) ?: return
         orders.updateOrder(order.copy(addressSentToSupplier = sent, updatedAt = clock.instant()))
+    }
+
+    /** Organization orders: quote approved on [date], or not yet (null). */
+    suspend fun setQuoteApproved(orderId: Long, date: LocalDate?) {
+        val order = orders.getOrder(orderId) ?: return
+        orders.updateOrder(order.copy(quoteApprovedOn = date, updatedAt = clock.instant()))
     }
 
     /** Organization orders: invoice issued on [date], or not yet (null). */

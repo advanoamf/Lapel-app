@@ -73,7 +73,7 @@ class MigrationTest {
             assertEquals(60, summary.paymentTermsDays)
             assertEquals(false, summary.hasAddress)
             assertEquals(false, summary.addressSentToSupplier)
-            assertEquals(5, db.openHelper.readableDatabase.version)
+            assertEquals(6, db.openHelper.readableDatabase.version)
         } finally {
             db.close()
         }

@@ -25,6 +25,7 @@ data class OrderSummaryRow(
     val addressSentToSupplier: Boolean,
     /** null = the customer pays privately. */
     val payerOrganization: String?,
+    val quoteApproved: Boolean,
     val invoiceIssued: Boolean,
     val receiptIssued: Boolean,
     val customerId: Long,
@@ -65,6 +66,7 @@ data class OrderSummaryRow(
         hasAddress = hasAddress,
         addressSentToSupplier = addressSentToSupplier,
         payerIsOrganization = payerOrganization != null,
+        quoteApproved = quoteApproved,
         invoiceIssued = invoiceIssued,
         receiptIssued = receiptIssued,
         fullyPaid = f.isFullyPaid,

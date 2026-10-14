@@ -201,7 +201,7 @@
     <string name="payer_value_private">Paid privately · %1$d%% deposit</string>
     <string name="payer_value_organization">Paid by %1$s · all at the end, net + 60</string>
     <string name="todo_pay_by">Due by %1$s · %2$s</string>
-    <string name="documents_title">Organization documents</string>
+    <string name="documents_title">Organization steps</string>
     <string name="document_invoice">Invoice issued</string>
     <string name="document_receipt">Receipt issued</string>
     <string name="document_issued_on">on %1$s</string>
@@ -211,4 +211,10 @@
     <string name="document_receipt_missing">Receipt missing</string>
     <string name="todo_invoice">Issue the invoice</string>
     <string name="todo_receipt">Issue the receipt</string>
+    <string name="document_quote">Quote approved</string>
+    <string name="documents_quote_hint">Send the organization a quote; order from Alibaba once it is approved.</string>
+    <string name="documents_order_hint">Quote approved – order from Alibaba.</string>
+    <string name="document_quote_pending">Quote pending</string>
+    <string name="todo_quote">Get the quote approved</string>
+    <string name="todo_order_alibaba">Quote approved – order from Alibaba</string>
 </resources>

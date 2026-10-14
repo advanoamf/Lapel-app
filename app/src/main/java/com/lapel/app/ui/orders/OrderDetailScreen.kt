@@ -164,9 +164,12 @@ fun OrderDetailScreen(
             if (order.payerOrganization != null) {
                 item {
                     DocumentsCard(
+                        quoteApprovedOn = order.quoteApprovedOn,
+                        isDraft = order.fulfillmentStatus == FulfillmentStatus.DRAFT,
                         invoiceIssuedOn = order.invoiceIssuedOn,
                         receiptIssuedOn = order.receiptIssuedOn,
                         fullyPaid = f.isFullyPaid,
+                        onQuote = viewModel::setQuoteApproved,
                         onInvoice = viewModel::setInvoiceIssued,
                         onReceipt = viewModel::setReceiptIssued,
                     )
@@ -324,21 +327,30 @@ private fun AddressCard(
     }
 }
 
-/** Organization orders: the invoice (after delivery) and the receipt (after payment). */
+/** Organization orders: quote approval (before Alibaba), invoice (after delivery), receipt (after payment). */
 @Composable
 private fun DocumentsCard(
+    quoteApprovedOn: LocalDate?,
+    isDraft: Boolean,
     invoiceIssuedOn: LocalDate?,
     receiptIssuedOn: LocalDate?,
     fullyPaid: Boolean,
+    onQuote: (Boolean) -> Unit,
     onInvoice: (Boolean) -> Unit,
     onReceipt: (Boolean) -> Unit,
 ) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(stringResource(R.string.documents_title), style = MaterialTheme.typography.titleSmall)
+            DocumentRow(R.string.document_quote, quoteApprovedOn, onQuote)
             DocumentRow(R.string.document_invoice, invoiceIssuedOn, onInvoice)
             DocumentRow(R.string.document_receipt, receiptIssuedOn, onReceipt)
-            if (invoiceIssuedOn == null) {
+            if (isDraft) {
+                Text(
+                    stringResource(if (quoteApprovedOn == null) R.string.documents_quote_hint else R.string.documents_order_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            } else if (invoiceIssuedOn == null) {
                 Text(stringResource(R.string.documents_invoice_hint), style = MaterialTheme.typography.bodySmall)
             } else if (receiptIssuedOn == null && fullyPaid) {
                 Text(stringResource(R.string.documents_receipt_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)

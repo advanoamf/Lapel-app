@@ -37,6 +37,7 @@ data class OrderReminderSnapshot(
     val addressSentToSupplier: Boolean = true,
     /** Paid by an organization (Bnei Akiva, the Scouts…): needs an invoice and a receipt. */
     val payerIsOrganization: Boolean = false,
+    val quoteApproved: Boolean = false,
     val invoiceIssued: Boolean = false,
     val receiptIssued: Boolean = false,
     val fullyPaid: Boolean = false,
@@ -107,13 +108,16 @@ class ReminderPolicy(private val settings: ReminderSettings = ReminderSettings()
     }
 
     /**
-     * An organization gets an invoice once the pins are delivered, and a receipt once it paid.
-     * Both stay open until marked as issued on the order.
+     * An organization first approves the quote (then the order goes to Alibaba), gets an invoice
+     * once the pins are delivered, and a receipt once it paid. Each stays open until done.
      */
     private fun documentReminders(order: OrderReminderSnapshot, log: List<ReminderLogEntry>, now: Instant): List<Reminder> {
         if (!order.payerIsOrganization || log.any { it.snoozedUntil?.isAfter(now) == true }) return emptyList()
         val delivered = order.status == FulfillmentStatus.DELIVERED || order.status == FulfillmentStatus.COMPLETED
+        val draft = order.status == FulfillmentStatus.DRAFT
         return listOfNotNull(
+            Reminder(order.orderId, ReminderType.QUOTE_PENDING, Money.ZERO).takeIf { draft && !order.quoteApproved },
+            Reminder(order.orderId, ReminderType.ORDER_FROM_ALIBABA, Money.ZERO).takeIf { draft && order.quoteApproved },
             Reminder(order.orderId, ReminderType.INVOICE_MISSING, order.outstanding).takeIf { delivered && !order.invoiceIssued },
             Reminder(order.orderId, ReminderType.RECEIPT_MISSING, Money.ZERO).takeIf { order.fullyPaid && !order.receiptIssued },
         )
@@ -162,7 +166,8 @@ class ReminderPolicy(private val settings: ReminderSettings = ReminderSettings()
             lastSent(type)?.let { daysBetween(today(it.sentAt), today) < days } == true
 
         return when (order.status) {
-            FulfillmentStatus.DRAFT -> {
+            // An organization's draft is a quote; it has its own steps (see documentReminders).
+            FulfillmentStatus.DRAFT -> if (order.payerIsOrganization) null else {
                 val type = ReminderType.STALE_DRAFT
                 val old = daysBetween(today(order.createdAt), today) >= settings.staleDraftDays
                 if (old && lastSent(type) == null) Reminder(order.orderId, type, Money.ZERO) else null
@@ -221,8 +226,10 @@ class ReminderPolicy(private val settings: ReminderSettings = ReminderSettings()
             ReminderType.BALANCE_OVERDUE,
             ReminderType.BALANCE_DUE,
             ReminderType.DEPOSIT_DUE,
+            ReminderType.ORDER_FROM_ALIBABA,
             ReminderType.INVOICE_MISSING,
             ReminderType.RECEIPT_MISSING,
+            ReminderType.QUOTE_PENDING,
             ReminderType.ADDRESS_NOT_SENT,
             ReminderType.ADDRESS_MISSING,
             ReminderType.STALE_DRAFT,

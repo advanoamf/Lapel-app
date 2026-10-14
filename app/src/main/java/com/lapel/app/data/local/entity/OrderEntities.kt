@@ -58,6 +58,8 @@ data class OrderEntity(
      * (Bnei Akiva, the Scouts, …), which pays everything at the end on net+60 terms.
      */
     val payerOrganization: String? = null,
+    /** Organization orders: when the organization approved the quote (before ordering from Alibaba). */
+    val quoteApprovedOn: LocalDate? = null,
     /** Organization orders: when the invoice was issued. */
     val invoiceIssuedOn: LocalDate? = null,
     /** Organization orders: when the receipt was issued after payment. */

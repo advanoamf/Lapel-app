@@ -202,7 +202,7 @@
     <string name="payer_value_private">תשלום פרטי · מקדמה %1$d%%</string>
     <string name="payer_value_organization">תשלום דרך %1$s · הכול בסוף, שוטף + 60</string>
     <string name="todo_pay_by">לתשלום עד %1$s · %2$s</string>
-    <string name="documents_title">מסמכים לארגון</string>
+    <string name="documents_title">שלבים מול הארגון</string>
     <string name="document_invoice">הוצאה חשבונית</string>
     <string name="document_receipt">נופקה קבלה</string>
     <string name="document_issued_on">ב-%1$s</string>
@@ -212,4 +212,10 @@
     <string name="document_receipt_missing">חסרה קבלה</string>
     <string name="todo_invoice">להוציא חשבונית</string>
     <string name="todo_receipt">לנפק קבלה</string>
+    <string name="document_quote">הצעת מחיר אושרה</string>
+    <string name="documents_quote_hint">שולחים לארגון הצעת מחיר; אחרי האישור מזמינים מעלבאבא.</string>
+    <string name="documents_order_hint">ההצעה אושרה – אפשר להזמין מעלבאבא.</string>
+    <string name="document_quote_pending">ממתין לאישור הצעה</string>
+    <string name="todo_quote">לקבל אישור הצעת מחיר</string>
+    <string name="todo_order_alibaba">הצעה אושרה – להזמין מעלבאבא</string>
 </resources>

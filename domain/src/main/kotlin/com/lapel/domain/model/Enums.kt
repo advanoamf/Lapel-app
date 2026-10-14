@@ -52,4 +52,8 @@ enum class ReminderType {
     INVOICE_MISSING,
     /** Organization paid: issue the receipt. */
     RECEIPT_MISSING,
+    /** Organization order: the quote was sent and is waiting for approval. */
+    QUOTE_PENDING,
+    /** Organization approved the quote: place the order with Alibaba. */
+    ORDER_FROM_ALIBABA,
 }

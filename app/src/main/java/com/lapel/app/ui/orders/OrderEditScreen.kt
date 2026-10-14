@@ -168,7 +168,10 @@ private fun PayerSection(
     Text(stringResource(R.string.field_payer), style = MaterialTheme.typography.labelLarge)
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         FilterChip(org == null, { typingOther = false; edit { copy(payerOrganization = null) } }, { Text(stringResource(R.string.payer_private)) })
-        FilterChip(org != null, { if (org == null) edit { copy(payerOrganization = organizations.first()) } }, { Text(stringResource(R.string.payer_organization)) })
+        FilterChip(org != null, {
+            // A new organization order usually starts as a quote waiting for approval.
+            if (org == null) edit { copy(payerOrganization = organizations.first(), initialStatus = FulfillmentStatus.DRAFT) }
+        }, { Text(stringResource(R.string.payer_organization)) })
     }
     if (org == null) {
         TextInput(

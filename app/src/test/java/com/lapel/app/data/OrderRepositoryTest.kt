@@ -148,6 +148,10 @@ class OrderRepositoryTest {
         assertEquals(listOf(com.lapel.domain.model.ReminderType.INVOICE_MISSING), open())
         repo.setInvoiceIssued(id, LocalDate.of(2026, 3, 10))
         assertEquals(true, db.orderDao().getSummary(id)!!.invoiceIssued)
+        // Saving the edit form (which has no invoice field) keeps the mark.
+        val edited = db.orderDao().getOrder(id)!!.copy(notes = "edited", invoiceIssuedOn = null)
+        repo.updateOrder(edited, db.orderDao().observeItems(id).first())
+        assertEquals(true, db.orderDao().getSummary(id)!!.invoiceIssued)
         pay(id, 3_000, PaymentMilestone.BALANCE)
         assertEquals(listOf(com.lapel.domain.model.ReminderType.RECEIPT_MISSING), open())
         repo.setReceiptIssued(id, LocalDate.of(2026, 3, 10))

@@ -163,6 +163,8 @@ class OrderEditViewModel @Inject constructor(
                 // An organization pays everything at the end (net+60): no deposit to wait for.
                 depositPercent = if (f.payerOrganization == null) f.depositPercent.toInt() else 0,
                 payerOrganization = f.payerOrganization?.trim(),
+                // A new organization order entered as already ordered had its quote approved.
+                quoteApprovedOn = f.orderDate.takeIf { base == null && f.payerOrganization != null && f.initialStatus != FulfillmentStatus.DRAFT },
                 discountAgorot = parseShekels(f.discount) ?: 0,
                 deliveryMethod = f.deliveryMethod,
                 alibabaOrderNumber = f.alibabaOrderNumber.trim().ifEmpty { null },

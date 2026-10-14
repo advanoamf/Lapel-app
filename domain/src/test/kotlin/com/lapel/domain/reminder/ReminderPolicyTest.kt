@@ -231,6 +231,13 @@ class OrganizationDocumentsTest {
         assertTrue(types(paid.copy(receiptIssued = true)).isEmpty())
     }
 
+    @Test fun `quote first, then order from Alibaba`() {
+        val quote = org.copy(status = FulfillmentStatus.DRAFT, createdAt = at(1))
+        assertEquals(listOf(ReminderType.QUOTE_PENDING), types(quote)) // no "old draft" item for a quote
+        assertEquals(listOf(ReminderType.ORDER_FROM_ALIBABA), types(quote.copy(quoteApproved = true)))
+        assertTrue(types(org.copy(quoteApproved = true)).isEmpty()) // already ordered
+    }
+
     @Test fun `private customers need no documents`() {
         val privateDelivered = org.copy(payerIsOrganization = false, status = FulfillmentStatus.COMPLETED, outstanding = Money.ZERO, fullyPaid = true)
         assertTrue(types(privateDelivered).isEmpty())
