@@ -121,6 +121,11 @@ fun OrderDetailScreen(
                         )
                     }
                     Text(stringResource(R.string.order_date_value, order.orderDate.formatted()), style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        order.payerOrganization?.let { stringResource(R.string.payer_value_organization, it) }
+                            ?: stringResource(R.string.payer_value_private, order.depositPercent),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                     order.dueDate?.let { Text(stringResource(R.string.due_date_value, it.formatted()), style = MaterialTheme.typography.bodySmall) }
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         FulfillmentChip(order.fulfillmentStatus)

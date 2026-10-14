@@ -178,6 +178,13 @@ private fun TaskCard(task: DashboardTask, modifier: Modifier = Modifier) {
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                task.payBy?.let {
+                    Text(
+                        stringResource(R.string.todo_pay_by, it.formatted(), order.payerOrganization ?: order.customerName),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
             if (r.amount.isPositive) {
                 Text(r.amount.formatted(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)

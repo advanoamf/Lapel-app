@@ -7,6 +7,7 @@
 | Payments | **No payment-gateway integration.** Customers pay outside the app (Bit, PayBox, bank transfer). The owner records payments manually; the app's job is to **remind** the owner to collect. |
 | Payment schedule | **50% deposit** when the Alibaba order is placed, **50% balance** when the product is delivered to the client. |
 | Server | **AWS free tier** (changed): Lambda Function URL + DynamoDB for backup and access from computer and phone. No static IP, no Firebase. See [08](08-cloud-server.md). |
+| Payer | Per order: **private** (deposit + balance) or **through an organization** (Bnei Akiva, the Scouts, or another one typed in). An organization order has no deposit; everything is paid at the end, net+60 from delivery. |
 | Currency | **ILS (₪) only.** Supplier costs are entered as the **₪ amount actually charged** for the Alibaba order (no USD entry in the app). Default **₪8 bank fee** per order. Customs and referral commission in ₪. |
 | Carrier | **Always FedEx** → FedEx Track API, no aggregator. Owner has a FedEx account for production API credentials. |
 | Order structure | One order can have **several pin designs (line items)** and **several FedEx tracking numbers**. Each line has **qty ordered from supplier** and **qty sold to client** (extras/defects). |

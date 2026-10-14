@@ -128,6 +128,21 @@ class OrderRepositoryTest {
         assertEquals(ChangeSource.SYSTEM, history[3].source)
     }
 
+    @Test fun `an organization pays everything at the end on net plus 60`() = runTest {
+        val id = newOrder(newCustomer(terms = 0))
+        val order = db.orderDao().getOrder(id)!!
+        db.orderDao().updateOrder(order.copy(payerOrganization = "בני עקיבא", depositPercent = 0))
+        repo.setStatus(id, FulfillmentStatus.ORDERED_FROM_ALIBABA)
+
+        val summary = db.orderDao().getSummary(id)!!
+        assertEquals("בני עקיבא", summary.payerOrganization)
+        assertEquals(60, summary.paymentTermsDays)
+        assertEquals(Money.ZERO, summary.financials().dueNow) // no deposit to wait for
+        val policy = com.lapel.domain.reminder.ReminderPolicy()
+        assertEquals(emptyList(), policy.openItems(listOf(summary.reminderSnapshot()), now))
+        assertEquals(listOf("בני עקיבא"), repo.observePayerOrganizations().first())
+    }
+
     @Test fun `duplicate tracking events are ignored`() = runTest {
         val id = newOrder(newCustomer())
         val shipmentId = db.shipmentDao().insert(

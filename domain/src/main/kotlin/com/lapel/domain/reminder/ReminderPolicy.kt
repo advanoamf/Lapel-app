@@ -185,6 +185,9 @@ class ReminderPolicy(private val settings: ReminderSettings = ReminderSettings()
         return if (neverSent || repeat) Reminder(order.orderId, type, order.outstanding) else null
     }
 
+    /** The day the balance should be paid by: delivery + grace days, or + the customer's terms. */
+    fun balanceDueDate(order: OrderReminderSnapshot): LocalDate? = balanceOverdueFrom(order)
+
     private fun balanceOverdueFrom(order: OrderReminderSnapshot): LocalDate? {
         val delivered = order.deliveredAt ?: return null
         val days = maxOf(order.paymentTermsDays, settings.overdueGraceDays)

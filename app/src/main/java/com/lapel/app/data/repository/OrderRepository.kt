@@ -33,6 +33,7 @@ class OrderRepository @Inject constructor(
     fun observeSummariesForCustomer(customerId: Long) = orders.observeSummariesForCustomer(customerId)
 
     fun observeOrder(orderId: Long) = orders.observeOrder(orderId)
+    fun observePayerOrganizations() = orders.observePayerOrganizations()
     fun observeItems(orderId: Long) = orders.observeItems(orderId)
     fun observeCosts(orderId: Long) = orders.observeCosts(orderId)
     fun observePayments(orderId: Long) = payments.observeForOrder(orderId)

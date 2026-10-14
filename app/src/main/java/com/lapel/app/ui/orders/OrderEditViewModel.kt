@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -50,6 +51,8 @@ data class OrderForm(
     val dueDate: LocalDate? = null,
     val deliveryMethod: DeliveryMethod = DeliveryMethod.FEDEX,
     val depositPercent: String = "50",
+    /** null = private customer (deposit + balance); otherwise the paying organization. */
+    val payerOrganization: String? = null,
     val discount: String = "",
     val alibabaOrderNumber: String = "",
     val alibabaOrderedOn: LocalDate? = null,
@@ -68,9 +71,10 @@ data class OrderForm(
 ) {
     val customerError get() = customerId == 0L
     val numberError get() = orderNumber.isBlank()
-    val depositError get() = depositPercent.toIntOrNull()?.let { it !in 0..100 } ?: true
+    val depositError get() = payerOrganization == null && (depositPercent.toIntOrNull()?.let { it !in 0..100 } ?: true)
+    val payerError get() = payerOrganization?.isBlank() == true
     val itemsError get() = items.isEmpty() || items.any { !it.valid }
-    val isValid get() = !customerError && !numberError && !depositError && !itemsError &&
+    val isValid get() = !customerError && !numberError && !depositError && !payerError && !itemsError &&
         (discount.isBlank() || parseShekels(discount) != null) && (alibabaPayment.isBlank() || parseShekels(alibabaPayment) != null) &&
         (customs.isBlank() || (parseShekels(customs) ?: -1) >= 0)
 }
@@ -91,6 +95,11 @@ class OrderEditViewModel @Inject constructor(
     val customers: StateFlow<List<CustomerEntity>> =
         customers.observeAll().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    /** Bnei Akiva and the Scouts, plus any organization used on an earlier order. */
+    val organizations: StateFlow<List<String>> = orders.observePayerOrganizations()
+        .map { used -> (DEFAULT_ORGANIZATIONS + used).distinct() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DEFAULT_ORGANIZATIONS)
+
     init {
         viewModelScope.launch {
             if (isNew) {
@@ -108,7 +117,8 @@ class OrderEditViewModel @Inject constructor(
                     orderDate = o.orderDate,
                     dueDate = o.dueDate,
                     deliveryMethod = o.deliveryMethod,
-                    depositPercent = o.depositPercent.toString(),
+                    depositPercent = (if (o.payerOrganization == null) o.depositPercent else DEFAULT_DEPOSIT_PERCENT).toString(),
+                    payerOrganization = o.payerOrganization,
                     discount = if (o.discountAgorot == 0L) "" else agorotToInput(o.discountAgorot),
                     alibabaOrderNumber = o.alibabaOrderNumber.orEmpty(),
                     alibabaOrderedOn = o.alibabaOrderedOn,
@@ -150,7 +160,9 @@ class OrderEditViewModel @Inject constructor(
                 orderDate = f.orderDate,
                 dueDate = f.dueDate,
                 fulfillmentStatus = base?.fulfillmentStatus ?: f.initialStatus,
-                depositPercent = f.depositPercent.toInt(),
+                // An organization pays everything at the end (net+60): no deposit to wait for.
+                depositPercent = if (f.payerOrganization == null) f.depositPercent.toInt() else 0,
+                payerOrganization = f.payerOrganization?.trim(),
                 discountAgorot = parseShekels(f.discount) ?: 0,
                 deliveryMethod = f.deliveryMethod,
                 alibabaOrderNumber = f.alibabaOrderNumber.trim().ifEmpty { null },
@@ -189,5 +201,10 @@ class OrderEditViewModel @Inject constructor(
                 entity.id
             }
         }
+    }
+
+    companion object {
+        const val DEFAULT_DEPOSIT_PERCENT = 50
+        val DEFAULT_ORGANIZATIONS = listOf("בני עקיבא", "הצופים")
     }
 }

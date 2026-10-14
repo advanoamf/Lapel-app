@@ -192,4 +192,14 @@
     <string name="todo_address_missing">לבקש כתובת למשלוח</string>
     <string name="todo_address_not_sent">להעביר כתובת ליצרן</string>
     <string name="todo_other">לטיפול</string>
+    <string name="field_payer">מי משלם</string>
+    <string name="payer_private">פרטי</string>
+    <string name="payer_organization">דרך ארגון</string>
+    <string name="payer_other">ארגון אחר</string>
+    <string name="field_organization_name">שם הארגון</string>
+    <string name="payer_private_hint">מקדמה של %1$s%% בהזמנה מעלבאבא, היתרה כשהסיכות מגיעות.</string>
+    <string name="payer_organization_hint">בלי מקדמה: כל הסכום משולם בסוף, שוטף + 60 מהמסירה.</string>
+    <string name="payer_value_private">תשלום פרטי · מקדמה %1$d%%</string>
+    <string name="payer_value_organization">תשלום דרך %1$s · הכול בסוף, שוטף + 60</string>
+    <string name="todo_pay_by">לתשלום עד %1$s · %2$s</string>
 </resources>

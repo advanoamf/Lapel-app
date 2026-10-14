@@ -1,6 +1,7 @@
 package com.lapel.app.ui.orders
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
@@ -63,6 +64,7 @@ fun OrderEditScreen(
 ) {
     val form by viewModel.form.collectAsStateWithLifecycle()
     val customers by viewModel.customers.collectAsStateWithLifecycle()
+    val organizations by viewModel.organizations.collectAsStateWithLifecycle()
     val savedId by viewModel.savedId.collectAsStateWithLifecycle()
     LaunchedEffect(savedId) { savedId?.let(onSaved) }
     val err = form.showErrors
@@ -80,10 +82,8 @@ fun OrderEditScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             CustomerPicker(customers, form.customerId, err && form.customerError, { id -> viewModel.edit { copy(customerId = id) } }, onNewCustomer)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextInput(form.orderNumber, { v -> viewModel.edit { copy(orderNumber = v) } }, stringResource(R.string.field_order_number), Modifier.weight(1f), isError = err && form.numberError)
-                TextInput(form.depositPercent, { v -> viewModel.edit { copy(depositPercent = v.filter(Char::isDigit)) } }, stringResource(R.string.field_deposit_percent), Modifier.weight(1f), KeyboardType.Number, isError = err && form.depositError)
-            }
+            TextInput(form.orderNumber, { v -> viewModel.edit { copy(orderNumber = v) } }, stringResource(R.string.field_order_number), isError = err && form.numberError)
+            PayerSection(form, organizations, err, viewModel::edit)
             TextInput(form.title, { v -> viewModel.edit { copy(title = v) } }, stringResource(R.string.field_title))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 DateInput(form.orderDate, { d -> d?.let { viewModel.edit { copy(orderDate = it) } } }, stringResource(R.string.field_order_date), Modifier.weight(1f))
@@ -149,6 +149,47 @@ fun OrderEditScreen(
             if (err && !form.isValid) Text(stringResource(R.string.form_errors), color = MaterialTheme.colorScheme.error)
             Button(onClick = viewModel::save, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.action_save)) }
         }
+    }
+}
+
+/** Private customer (deposit + balance) or an organization that pays everything at the end. */
+@Composable
+private fun PayerSection(
+    form: OrderForm,
+    organizations: List<String>,
+    showErrors: Boolean,
+    edit: (OrderForm.() -> OrderForm) -> Unit,
+) {
+    // "Other organization" is open while the typed name is not one of the known ones.
+    var typingOther by remember { mutableStateOf(false) }
+    val org = form.payerOrganization
+    val other = typingOther || (org != null && org !in organizations)
+
+    Text(stringResource(R.string.field_payer), style = MaterialTheme.typography.labelLarge)
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        FilterChip(org == null, { typingOther = false; edit { copy(payerOrganization = null) } }, { Text(stringResource(R.string.payer_private)) })
+        FilterChip(org != null, { if (org == null) edit { copy(payerOrganization = organizations.first()) } }, { Text(stringResource(R.string.payer_organization)) })
+    }
+    if (org == null) {
+        TextInput(
+            form.depositPercent, { v -> edit { copy(depositPercent = v.filter(Char::isDigit)) } }, stringResource(R.string.field_deposit_percent),
+            keyboardType = KeyboardType.Number, isError = showErrors && form.depositError,
+        )
+        Text(stringResource(R.string.payer_private_hint, form.depositPercent.ifBlank { "0" }), style = MaterialTheme.typography.bodySmall)
+    } else {
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            organizations.forEach { name ->
+                FilterChip(!other && org == name, { typingOther = false; edit { copy(payerOrganization = name) } }, { Text(name) })
+            }
+            FilterChip(other, { typingOther = true; edit { copy(payerOrganization = "") } }, { Text(stringResource(R.string.payer_other)) })
+        }
+        if (other) {
+            TextInput(
+                org, { v -> edit { copy(payerOrganization = v) } }, stringResource(R.string.field_organization_name),
+                isError = showErrors && form.payerError,
+            )
+        }
+        Text(stringResource(R.string.payer_organization_hint), style = MaterialTheme.typography.bodySmall)
     }
 }
 

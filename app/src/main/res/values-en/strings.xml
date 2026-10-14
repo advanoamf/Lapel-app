@@ -191,4 +191,14 @@
     <string name="todo_address_missing">Ask for the shipping address</string>
     <string name="todo_address_not_sent">Pass the address to the manufacturer</string>
     <string name="todo_other">To do</string>
+    <string name="field_payer">Who pays</string>
+    <string name="payer_private">Private</string>
+    <string name="payer_organization">Organization</string>
+    <string name="payer_other">Other organization</string>
+    <string name="field_organization_name">Organization name</string>
+    <string name="payer_private_hint">%1$s%% deposit when ordering from Alibaba, the rest when the pins arrive.</string>
+    <string name="payer_organization_hint">No deposit: everything is paid at the end, net + 60 from delivery.</string>
+    <string name="payer_value_private">Paid privately · %1$d%% deposit</string>
+    <string name="payer_value_organization">Paid by %1$s · all at the end, net + 60</string>
+    <string name="todo_pay_by">Due by %1$s · %2$s</string>
 </resources>

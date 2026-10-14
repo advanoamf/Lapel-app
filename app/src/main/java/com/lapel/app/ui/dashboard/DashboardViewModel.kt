@@ -8,6 +8,7 @@ import com.lapel.domain.finance.PeriodOrder
 import com.lapel.domain.finance.PeriodSummary
 import com.lapel.domain.model.FulfillmentStatus
 import com.lapel.domain.model.Money
+import com.lapel.domain.model.ReminderType
 import com.lapel.domain.model.sum
 import com.lapel.domain.reminder.OpenItem
 import com.lapel.domain.reminder.ReminderPolicy
@@ -23,7 +24,12 @@ import javax.inject.Inject
 
 enum class SummaryPeriod { LAST_30_DAYS, THIS_MONTH, LAST_MONTH }
 
-data class DashboardTask(val item: OpenItem, val order: OrderSummaryRow)
+data class DashboardTask(
+    val item: OpenItem,
+    val order: OrderSummaryRow,
+    /** For a balance on payment terms (e.g. an organization on net+60): when it is due. */
+    val payBy: LocalDate? = null,
+)
 
 data class DashboardState(
     val period: SummaryPeriod = SummaryPeriod.LAST_30_DAYS,
@@ -47,6 +53,7 @@ class DashboardViewModel @Inject constructor(
         val today = LocalDate.now(clock)
         val (from, to) = p.range(today)
         val withFinancials = rows.map { it to it.financials() }
+        val snapshots = withFinancials.associate { (r, f) -> r.orderId to r.reminderSnapshot(f) }
         val byId = rows.associateBy { it.orderId }
 
         DashboardState(
@@ -54,8 +61,16 @@ class DashboardViewModel @Inject constructor(
             from = from,
             to = to,
             summary = PeriodSummary.of(withFinancials.map { (r, f) -> PeriodOrder(r.orderDate, r.fulfillmentStatus, f) }, from, to),
-            tasks = policy.openItems(withFinancials.map { (r, f) -> r.reminderSnapshot(f) }, clock.instant())
-                .mapNotNull { item -> byId[item.reminder.orderId]?.let { DashboardTask(item, it) } },
+            tasks = policy.openItems(snapshots.values.toList(), clock.instant())
+                .mapNotNull { item ->
+                    val order = byId[item.reminder.orderId] ?: return@mapNotNull null
+                    val payBy = if (item.reminder.type == ReminderType.BALANCE_DUE && order.paymentTermsDays > 0) {
+                        snapshots[order.orderId]?.let(policy::balanceDueDate)
+                    } else {
+                        null
+                    }
+                    DashboardTask(item, order, payBy)
+                },
             totalToCollect = withFinancials
                 .filter { (r, _) -> r.fulfillmentStatus != FulfillmentStatus.DRAFT }
                 .map { (_, f) -> f.outstanding }

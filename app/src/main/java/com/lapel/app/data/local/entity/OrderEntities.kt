@@ -53,6 +53,11 @@ data class OrderEntity(
     val shippingAddress: String? = null,
     /** The address was passed on to the manufacturer. */
     @ColumnInfo(defaultValue = "0") val addressSentToSupplier: Boolean = false,
+    /**
+     * Who pays: null = the customer privately (deposit + balance); otherwise the organization
+     * (Bnei Akiva, the Scouts, …), which pays everything at the end on net+60 terms.
+     */
+    val payerOrganization: String? = null,
     /** Sync id shared with the server; set by a database trigger. */
     val uid: String? = null,
     /** When this row last changed (ms); set by a database trigger. */

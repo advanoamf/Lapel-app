@@ -23,6 +23,8 @@ data class OrderSummaryRow(
     val createdAt: Instant,
     val hasAddress: Boolean,
     val addressSentToSupplier: Boolean,
+    /** null = the customer pays privately. */
+    val payerOrganization: String?,
     val customerId: Long,
     val customerName: String,
     val customerOrganization: String?,

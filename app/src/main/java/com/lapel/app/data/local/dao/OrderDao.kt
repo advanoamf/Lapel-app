@@ -66,14 +66,23 @@ interface OrderDao {
     @Query("SELECT MAX(CAST(orderNumber AS INTEGER)) FROM orders WHERE orderNumber GLOB '[0-9]*' AND orderNumber NOT GLOB '*[^0-9]*'")
     suspend fun maxNumericOrderNumber(): Long?
 
+    /** Organizations that paid for earlier orders, for the payer picker. */
+    @Query("SELECT DISTINCT payerOrganization FROM orders WHERE payerOrganization IS NOT NULL ORDER BY payerOrganization")
+    fun observePayerOrganizations(): Flow<List<String>>
+
     companion object {
+        /** "שוטף+60": an organization pays 60 days after delivery. */
+        const val ORGANIZATION_TERMS_DAYS = 60
+
         const val SUMMARY_SELECT = """
             SELECT o.id AS orderId, o.orderNumber, o.title, o.orderDate, o.fulfillmentStatus,
                    o.deliveryMethod, o.depositPercent, o.alibabaOrderedOn, o.deliveredAt, o.createdAt,
                    (o.shippingAddress IS NOT NULL AND TRIM(o.shippingAddress) != '') AS hasAddress,
-                   o.addressSentToSupplier,
+                   o.addressSentToSupplier, o.payerOrganization,
                    c.id AS customerId, c.name AS customerName, c.organization AS customerOrganization,
-                   c.phone AS customerPhone, c.paymentTermsDays,
+                   c.phone AS customerPhone,
+                   CASE WHEN o.payerOrganization IS NULL THEN c.paymentTermsDays
+                        ELSE MAX(c.paymentTermsDays, $ORGANIZATION_TERMS_DAYS) END AS paymentTermsDays,
                    (SELECT COALESCE(SUM(i.quantitySold * i.unitPriceAgorot), 0)
                       FROM order_items i WHERE i.orderId = o.id) - o.discountAgorot AS sellingTotal,
                    (SELECT COALESCE(SUM(k.amountAgorot), 0)

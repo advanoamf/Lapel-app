@@ -59,7 +59,11 @@ data class OrderDetailState(
         get() = financials?.let { if (it.dueNow.isPositive) it.dueNow else it.outstanding } ?: Money.ZERO
 
     val suggestedMilestone: PaymentMilestone
-        get() = if (financials?.paidTotal?.isPositive == true) PaymentMilestone.BALANCE else PaymentMilestone.DEPOSIT
+        get() = when {
+            financials?.paidTotal?.isPositive == true -> PaymentMilestone.BALANCE
+            order?.payerOrganization != null -> PaymentMilestone.BALANCE // organizations pay everything at the end
+            else -> PaymentMilestone.DEPOSIT
+        }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
