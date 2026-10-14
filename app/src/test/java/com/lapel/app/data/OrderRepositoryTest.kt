@@ -141,6 +141,17 @@ class OrderRepositoryTest {
         val policy = com.lapel.domain.reminder.ReminderPolicy()
         assertEquals(emptyList<com.lapel.domain.reminder.OpenItem>(), policy.openItems(listOf(summary.reminderSnapshot()), now))
         assertEquals(listOf("בני עקיבא"), repo.observePayerOrganizations().first())
+
+        // Delivered: the invoice is the next step; paid: the receipt.
+        repo.setStatus(id, FulfillmentStatus.DELIVERED)
+        suspend fun open() = policy.openItems(listOf(db.orderDao().getSummary(id)!!.reminderSnapshot()), now).map { it.reminder.type }
+        assertEquals(listOf(com.lapel.domain.model.ReminderType.INVOICE_MISSING), open())
+        repo.setInvoiceIssued(id, LocalDate.of(2026, 3, 10))
+        assertEquals(true, db.orderDao().getSummary(id)!!.invoiceIssued)
+        pay(id, 3_000, PaymentMilestone.BALANCE)
+        assertEquals(listOf(com.lapel.domain.model.ReminderType.RECEIPT_MISSING), open())
+        repo.setReceiptIssued(id, LocalDate.of(2026, 3, 10))
+        assertEquals(emptyList<com.lapel.domain.model.ReminderType>(), open())
     }
 
     @Test fun `duplicate tracking events are ignored`() = runTest {

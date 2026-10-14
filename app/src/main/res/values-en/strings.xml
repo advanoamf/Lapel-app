@@ -201,4 +201,14 @@
     <string name="payer_value_private">Paid privately · %1$d%% deposit</string>
     <string name="payer_value_organization">Paid by %1$s · all at the end, net + 60</string>
     <string name="todo_pay_by">Due by %1$s · %2$s</string>
+    <string name="documents_title">Organization documents</string>
+    <string name="document_invoice">Invoice issued</string>
+    <string name="document_receipt">Receipt issued</string>
+    <string name="document_issued_on">on %1$s</string>
+    <string name="documents_invoice_hint">Issue the invoice to the organization when the pins arrive.</string>
+    <string name="documents_receipt_hint">The organization paid – issue the receipt.</string>
+    <string name="document_invoice_missing">Invoice missing</string>
+    <string name="document_receipt_missing">Receipt missing</string>
+    <string name="todo_invoice">Issue the invoice</string>
+    <string name="todo_receipt">Issue the receipt</string>
 </resources>

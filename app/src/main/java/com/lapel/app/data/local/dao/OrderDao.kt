@@ -79,6 +79,8 @@ interface OrderDao {
                    o.deliveryMethod, o.depositPercent, o.alibabaOrderedOn, o.deliveredAt, o.createdAt,
                    (o.shippingAddress IS NOT NULL AND TRIM(o.shippingAddress) != '') AS hasAddress,
                    o.addressSentToSupplier, o.payerOrganization,
+                   (o.invoiceIssuedOn IS NOT NULL) AS invoiceIssued,
+                   (o.receiptIssuedOn IS NOT NULL) AS receiptIssued,
                    c.id AS customerId, c.name AS customerName, c.organization AS customerOrganization,
                    c.phone AS customerPhone,
                    CASE WHEN o.payerOrganization IS NULL THEN c.paymentTermsDays

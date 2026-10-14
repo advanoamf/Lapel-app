@@ -202,4 +202,14 @@
     <string name="payer_value_private">תשלום פרטי · מקדמה %1$d%%</string>
     <string name="payer_value_organization">תשלום דרך %1$s · הכול בסוף, שוטף + 60</string>
     <string name="todo_pay_by">לתשלום עד %1$s · %2$s</string>
+    <string name="documents_title">מסמכים לארגון</string>
+    <string name="document_invoice">הוצאה חשבונית</string>
+    <string name="document_receipt">נופקה קבלה</string>
+    <string name="document_issued_on">ב-%1$s</string>
+    <string name="documents_invoice_hint">מוציאים חשבונית לארגון כשהסיכות מגיעות.</string>
+    <string name="documents_receipt_hint">הארגון שילם – צריך לנפק קבלה.</string>
+    <string name="document_invoice_missing">חסרה חשבונית</string>
+    <string name="document_receipt_missing">חסרה קבלה</string>
+    <string name="todo_invoice">להוציא חשבונית</string>
+    <string name="todo_receipt">לנפק קבלה</string>
 </resources>

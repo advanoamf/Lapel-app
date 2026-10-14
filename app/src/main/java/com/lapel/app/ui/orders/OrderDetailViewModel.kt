@@ -112,6 +112,10 @@ class OrderDetailViewModel @Inject constructor(
 
     fun setAddressSent(sent: Boolean) = viewModelScope.launch { repository.setAddressSent(id, sent) }
 
+    fun setInvoiceIssued(issued: Boolean) = viewModelScope.launch { repository.setInvoiceIssued(id, today().takeIf { issued }) }
+
+    fun setReceiptIssued(issued: Boolean) = viewModelScope.launch { repository.setReceiptIssued(id, today().takeIf { issued }) }
+
     fun recordPayment(amount: Money, method: PaymentMethod, milestone: PaymentMilestone, date: LocalDate, reference: String?) {
         if (!amount.isPositive) return
         viewModelScope.launch {

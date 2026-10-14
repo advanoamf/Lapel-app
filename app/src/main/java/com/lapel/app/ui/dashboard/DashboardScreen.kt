@@ -50,6 +50,8 @@ private fun ReminderType.title(): Int = when (this) {
     ReminderType.STALE_DRAFT -> R.string.todo_draft
     ReminderType.ADDRESS_MISSING -> R.string.todo_address_missing
     ReminderType.ADDRESS_NOT_SENT -> R.string.todo_address_not_sent
+    ReminderType.INVOICE_MISSING -> R.string.todo_invoice
+    ReminderType.RECEIPT_MISSING -> R.string.todo_receipt
     else -> R.string.todo_other
 }
 

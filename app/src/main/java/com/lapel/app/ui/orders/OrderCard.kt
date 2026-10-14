@@ -60,6 +60,11 @@ fun OrderCard(
                     PaymentChip(financials.paymentStatus)
                 }
                 if (overdue) OverdueChip()
+                if (row.payerOrganization != null) {
+                    val delivered = row.fulfillmentStatus == FulfillmentStatus.DELIVERED || row.fulfillmentStatus == FulfillmentStatus.COMPLETED
+                    if (delivered && !row.invoiceIssued) AlertChip(stringResource(R.string.document_invoice_missing))
+                    if (financials.isFullyPaid && !row.receiptIssued) AlertChip(stringResource(R.string.document_receipt_missing))
+                }
                 when (address) {
                     AddressStatus.MISSING -> AlertChip(stringResource(R.string.address_missing))
                     AddressStatus.NOT_SENT -> AlertChip(stringResource(R.string.address_not_sent))

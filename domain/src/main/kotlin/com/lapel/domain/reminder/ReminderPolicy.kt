@@ -35,6 +35,11 @@ data class OrderReminderSnapshot(
     val deliveryMethod: DeliveryMethod = DeliveryMethod.FEDEX,
     val hasAddress: Boolean = true,
     val addressSentToSupplier: Boolean = true,
+    /** Paid by an organization (Bnei Akiva, the Scouts…): needs an invoice and a receipt. */
+    val payerIsOrganization: Boolean = false,
+    val invoiceIssued: Boolean = false,
+    val receiptIssued: Boolean = false,
+    val fullyPaid: Boolean = false,
 )
 
 enum class AddressStatus { NOT_NEEDED, MISSING, NOT_SENT, DONE }
@@ -65,7 +70,8 @@ class ReminderPolicy(private val settings: ReminderSettings = ReminderSettings()
         val byOrder = log.groupBy { it.orderId }
         return orders.flatMap { order ->
             val orderLog = byOrder[order.orderId].orEmpty()
-            listOfNotNull(reminderFor(order, orderLog, now), addressReminder(order, orderLog, now))
+            listOfNotNull(reminderFor(order, orderLog, now), addressReminder(order, orderLog, now)) +
+                documentReminders(order, orderLog, now)
         }
     }
 
@@ -98,6 +104,19 @@ class ReminderPolicy(private val settings: ReminderSettings = ReminderSettings()
         !order.hasAddress -> AddressStatus.MISSING
         !order.addressSentToSupplier -> AddressStatus.NOT_SENT
         else -> AddressStatus.DONE
+    }
+
+    /**
+     * An organization gets an invoice once the pins are delivered, and a receipt once it paid.
+     * Both stay open until marked as issued on the order.
+     */
+    private fun documentReminders(order: OrderReminderSnapshot, log: List<ReminderLogEntry>, now: Instant): List<Reminder> {
+        if (!order.payerIsOrganization || log.any { it.snoozedUntil?.isAfter(now) == true }) return emptyList()
+        val delivered = order.status == FulfillmentStatus.DELIVERED || order.status == FulfillmentStatus.COMPLETED
+        return listOfNotNull(
+            Reminder(order.orderId, ReminderType.INVOICE_MISSING, order.outstanding).takeIf { delivered && !order.invoiceIssued },
+            Reminder(order.orderId, ReminderType.RECEIPT_MISSING, Money.ZERO).takeIf { order.fullyPaid && !order.receiptIssued },
+        )
     }
 
     private fun addressReminder(order: OrderReminderSnapshot, log: List<ReminderLogEntry>, now: Instant): Reminder? {
@@ -178,6 +197,9 @@ class ReminderPolicy(private val settings: ReminderSettings = ReminderSettings()
             return if (!sentWithin(type, 1)) Reminder(order.orderId, type, order.outstanding) else null
         }
 
+        // The organization pays against the invoice; until it is issued that is the step to take.
+        if (order.payerIsOrganization && !order.invoiceIssued) return null
+
         val type = ReminderType.BALANCE_DUE
         val neverSent = lastSent(type) == null
         // With payment terms (e.g. net+60) remind once on delivery, then wait for the due date.
@@ -199,6 +221,8 @@ class ReminderPolicy(private val settings: ReminderSettings = ReminderSettings()
             ReminderType.BALANCE_OVERDUE,
             ReminderType.BALANCE_DUE,
             ReminderType.DEPOSIT_DUE,
+            ReminderType.INVOICE_MISSING,
+            ReminderType.RECEIPT_MISSING,
             ReminderType.ADDRESS_NOT_SENT,
             ReminderType.ADDRESS_MISSING,
             ReminderType.STALE_DRAFT,

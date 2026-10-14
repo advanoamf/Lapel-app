@@ -16,6 +16,7 @@ import com.lapel.domain.status.OrderStatusReconciler
 import kotlinx.coroutines.flow.Flow
 import java.time.Clock
 import java.time.Instant
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -141,6 +142,18 @@ class OrderRepository @Inject constructor(
     suspend fun setAddressSent(orderId: Long, sent: Boolean) {
         val order = orders.getOrder(orderId) ?: return
         orders.updateOrder(order.copy(addressSentToSupplier = sent, updatedAt = clock.instant()))
+    }
+
+    /** Organization orders: invoice issued on [date], or not yet (null). */
+    suspend fun setInvoiceIssued(orderId: Long, date: LocalDate?) {
+        val order = orders.getOrder(orderId) ?: return
+        orders.updateOrder(order.copy(invoiceIssuedOn = date, updatedAt = clock.instant()))
+    }
+
+    /** Organization orders: receipt issued on [date], or not yet (null). */
+    suspend fun setReceiptIssued(orderId: Long, date: LocalDate?) {
+        val order = orders.getOrder(orderId) ?: return
+        orders.updateOrder(order.copy(receiptIssuedOn = date, updatedAt = clock.instant()))
     }
 
     private fun OrderEntity.withStatus(status: FulfillmentStatus, now: Instant): OrderEntity {

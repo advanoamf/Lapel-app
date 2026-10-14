@@ -1,5 +1,6 @@
 package com.lapel.app.ui.orders
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -60,6 +61,7 @@ import com.lapel.domain.model.FulfillmentStatus
 import com.lapel.domain.model.Money
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.LocalDate
 
 private val timeFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").withZone(ZoneId.of("Asia/Jerusalem"))
 
@@ -156,6 +158,17 @@ fun OrderDetailScreen(
                             cm?.setPrimaryClip(android.content.ClipData.newPlainText("address", text))
                         },
                         onEdit = { onEdit(viewModel.id) },
+                    )
+                }
+            }
+            if (order.payerOrganization != null) {
+                item {
+                    DocumentsCard(
+                        invoiceIssuedOn = order.invoiceIssuedOn,
+                        receiptIssuedOn = order.receiptIssuedOn,
+                        fullyPaid = f.isFullyPaid,
+                        onInvoice = viewModel::setInvoiceIssued,
+                        onReceipt = viewModel::setReceiptIssued,
                     )
                 }
             }
@@ -308,6 +321,38 @@ private fun AddressCard(
                 }
             }
         }
+    }
+}
+
+/** Organization orders: the invoice (after delivery) and the receipt (after payment). */
+@Composable
+private fun DocumentsCard(
+    invoiceIssuedOn: LocalDate?,
+    receiptIssuedOn: LocalDate?,
+    fullyPaid: Boolean,
+    onInvoice: (Boolean) -> Unit,
+    onReceipt: (Boolean) -> Unit,
+) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(stringResource(R.string.documents_title), style = MaterialTheme.typography.titleSmall)
+            DocumentRow(R.string.document_invoice, invoiceIssuedOn, onInvoice)
+            DocumentRow(R.string.document_receipt, receiptIssuedOn, onReceipt)
+            if (invoiceIssuedOn == null) {
+                Text(stringResource(R.string.documents_invoice_hint), style = MaterialTheme.typography.bodySmall)
+            } else if (receiptIssuedOn == null && fullyPaid) {
+                Text(stringResource(R.string.documents_receipt_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
+        }
+    }
+}
+
+@Composable
+private fun DocumentRow(@StringRes label: Int, issuedOn: LocalDate?, onChange: (Boolean) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Checkbox(checked = issuedOn != null, onCheckedChange = onChange)
+        Text(stringResource(label), modifier = Modifier.weight(1f))
+        issuedOn?.let { Text(stringResource(R.string.document_issued_on, it.formatted()), style = MaterialTheme.typography.bodySmall) }
     }
 }
 

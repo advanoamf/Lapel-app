@@ -58,6 +58,10 @@ data class OrderEntity(
      * (Bnei Akiva, the Scouts, …), which pays everything at the end on net+60 terms.
      */
     val payerOrganization: String? = null,
+    /** Organization orders: when the invoice was issued. */
+    val invoiceIssuedOn: LocalDate? = null,
+    /** Organization orders: when the receipt was issued after payment. */
+    val receiptIssuedOn: LocalDate? = null,
     /** Sync id shared with the server; set by a database trigger. */
     val uid: String? = null,
     /** When this row last changed (ms); set by a database trigger. */

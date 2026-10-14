@@ -193,3 +193,46 @@ class OpenItemsTest {
         assertFalse(item.overdue)
     }
 }
+
+class OrganizationDocumentsTest {
+    private val zone = ZoneId.of("Asia/Jerusalem")
+    private val policy = ReminderPolicy()
+    private fun at(day: Int): Instant = LocalDateTime.of(2026, 3, day, 10, 0).atZone(zone).toInstant()
+
+    private val org = OrderReminderSnapshot(
+        orderId = 7,
+        status = FulfillmentStatus.ORDERED_FROM_ALIBABA,
+        depositOutstanding = Money.ZERO,
+        outstanding = Money.shekels(2_000),
+        createdAt = at(1),
+        orderedFromAlibabaOn = LocalDate.of(2026, 3, 1),
+        deliveredAt = null,
+        paymentTermsDays = 60,
+        orderDate = LocalDate.of(2026, 3, 1),
+        payerIsOrganization = true,
+    )
+
+    private fun types(o: OrderReminderSnapshot) = policy.openItems(listOf(o), at(20)).map { it.reminder.type }
+
+    @Test fun `invoice once delivered, instead of chasing the balance`() {
+        assertTrue(types(org).isEmpty())
+        val delivered = org.copy(status = FulfillmentStatus.DELIVERED, deliveredAt = at(15))
+        assertEquals(listOf(ReminderType.INVOICE_MISSING), types(delivered))
+        // With the invoice out, the balance waits for its net+60 date.
+        assertEquals(listOf(ReminderType.BALANCE_DUE), types(delivered.copy(invoiceIssued = true)))
+    }
+
+    @Test fun `receipt once paid`() {
+        val paid = org.copy(
+            status = FulfillmentStatus.COMPLETED, deliveredAt = at(15), outstanding = Money.ZERO,
+            invoiceIssued = true, fullyPaid = true,
+        )
+        assertEquals(listOf(ReminderType.RECEIPT_MISSING), types(paid))
+        assertTrue(types(paid.copy(receiptIssued = true)).isEmpty())
+    }
+
+    @Test fun `private customers need no documents`() {
+        val privateDelivered = org.copy(payerIsOrganization = false, status = FulfillmentStatus.COMPLETED, outstanding = Money.ZERO, fullyPaid = true)
+        assertTrue(types(privateDelivered).isEmpty())
+    }
+}

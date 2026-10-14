@@ -48,4 +48,8 @@ enum class ReminderType {
     SHIPPED,
     DELIVERED,
     SYNC_FAILED,
+    /** Organization order delivered: issue the invoice. */
+    INVOICE_MISSING,
+    /** Organization paid: issue the receipt. */
+    RECEIPT_MISSING,
 }
