@@ -139,7 +139,7 @@ class OrderRepositoryTest {
         assertEquals(60, summary.paymentTermsDays)
         assertEquals(Money.ZERO, summary.financials().dueNow) // no deposit to wait for
         val policy = com.lapel.domain.reminder.ReminderPolicy()
-        assertEquals(emptyList(), policy.openItems(listOf(summary.reminderSnapshot()), now))
+        assertEquals(emptyList<com.lapel.domain.reminder.OpenItem>(), policy.openItems(listOf(summary.reminderSnapshot()), now))
         assertEquals(listOf("בני עקיבא"), repo.observePayerOrganizations().first())
     }
 
